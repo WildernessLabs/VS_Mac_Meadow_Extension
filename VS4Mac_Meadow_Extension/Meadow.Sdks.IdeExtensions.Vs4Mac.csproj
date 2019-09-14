@@ -17,9 +17,6 @@
     <AddinReference Include="MonoDevelop.Debugger" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Meadow.CLI\Meadow.CLI.Core\Meadow.CLI.Core.csproj" />
-  </ItemGroup>
-  <ItemGroup>
     <None Update="Templates\Meadow.Sdk.Templates.0.1.0.nupkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
