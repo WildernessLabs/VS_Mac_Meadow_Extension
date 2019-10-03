@@ -62,6 +62,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         //https://stackoverflow.com/questions/29798243/how-to-write-to-the-tool-output-pad-from-within-a-monodevelop-add-in
         async Task DeployApp(MeadowDeviceExecutionTarget target, string folder, CancellationTokenSource cts)
         {
+            DeploymentTargetsManager.StopPollingForDevices();
+
             ProgressMonitor toolMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetToolOutputProgressMonitor(true, cts);
             ProgressMonitor outMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetStatusProgressMonitor("Meadow", IconId.Null, true);
 
@@ -94,6 +96,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             {
                 monitor.EndTask();
                 monitor.Dispose();
+
+                DeploymentTargetsManager.StartPollingForDevices();
             }
         }
 
@@ -172,7 +176,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             string serial = meadow.DeviceInfo.SerialNumber;
 
-            monitor.ReportSuccess("Resetting Meadow and starting app (30-60s)");
+            monitor.ReportSuccess("Resetting Meadow and starting app");
 
             MeadowDeviceManager.MonoEnable(meadow);
 
