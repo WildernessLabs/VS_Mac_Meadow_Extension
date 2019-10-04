@@ -2,7 +2,7 @@
 <ExtensionModel>
     
     <Runtime>
-        <Import file="WildernessLabs.Meadow.Template.0.2.2.nupkg" />    
+        <Import file="WildernessLabs.Meadow.Template.0.2.4.nupkg" />    
     </Runtime>
     
     <Extension path="/MonoDevelop/Ide/ProjectTemplateCategories">
@@ -25,7 +25,7 @@
             templateId="WildernessLabs.Meadow.Templates.BasicApp"
             _overrideName="Meadow Application"
             _overrideDescription="Creates a new Meadow project."
-            path="WildernessLabs.Meadow.Template.0.2.2.nupkg"
+            path="WildernessLabs.Meadow.Template.0.2.4.nupkg"
             category="meadow/app/general"
             />
         <!-- eventually add a lib project template -->

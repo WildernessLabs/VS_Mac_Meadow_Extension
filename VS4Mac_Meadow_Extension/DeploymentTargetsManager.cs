@@ -39,6 +39,11 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             {
                 await UpdateTargetsList(cts.Token);
                 await Task.Delay(2000);
+
+                if(cts.IsCancellationRequested)
+                {
+                    isPolling = false;
+                }
             }
 
             isPolling = false;
@@ -47,6 +52,13 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         public static void StopPollingForDevices()
         {
             cts.Cancel();
+        }
+
+        public static async Task PausePollingForDevices(int seconds = 15)
+        {
+            StopPollingForDevices();
+            await Task.Delay(seconds * 1000);
+            StartPollingForDevices();
         }
 
         private static async Task UpdateTargetsList(CancellationToken ct)
