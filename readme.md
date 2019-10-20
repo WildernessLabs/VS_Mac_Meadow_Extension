@@ -29,6 +29,10 @@ To create an addin package (`.mpack`), first, build the add-in in release mode, 
 
 When publishing, make sure to bump the version number in the `/Properties/AddinInfo.cs` file, as well as the `AssemblyInfo.cs` file.
 
+## License
+
+Released under the [Apache 2 license](license.md).
+
 ## Authors
 
-Bryan Costanich
+Bryan Costanich, Adrian Stevens
