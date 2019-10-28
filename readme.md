@@ -1,6 +1,6 @@
 # Visual Studio for Mac Extension
 
-This is the add-in for Visual Studio for Ma that enables Meadow projects to be built and deployed on Mac. 
+This is the add-in for Visual Studio for Mac that enables Meadow projects to be built and deployed from Mac. 
 
 ## Installation 
 
