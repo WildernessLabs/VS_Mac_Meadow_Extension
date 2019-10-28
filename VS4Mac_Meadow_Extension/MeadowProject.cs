@@ -70,7 +70,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         protected override bool OnGetSupportsFramework(TargetFramework framework)
         {
             // this just checks to make sure it's a "NetFramework" project, not a Silverlight project.
-            // leftover from the old model of extensions.
             Console.WriteLine($"WLABS: TargetFramework: { framework.Name }");
             return framework.Id.Identifier == TargetFrameworkMoniker.NET_4_5.Identifier;
         }

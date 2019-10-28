@@ -88,10 +88,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
                 await DeployApp(meadow, monitor, cts, folder, meadowFiles, localFiles);
 
-            //    await DeployRequiredLibraries(meadow, monitor, cts, folder);
-
-              //  await DeployMeadowApp(meadow, monitor, cts, folder);
-
                 await ResetMeadowAndStartMono(meadow, monitor, cts);
             }
             catch (Exception ex)
@@ -151,8 +147,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         async Task<(List<string> files, List<UInt32> crcs)>     GetLocalFiles(ProgressMonitor monitor, CancellationTokenSource cts, string folder)
         {
             //get list of files in folder
-            // var files = Directory.GetFiles(folder, "*.dll");
-
             var paths = Directory.EnumerateFiles(folder, "*.*", SearchOption.TopDirectoryOnly)
             .Where(s => s.EndsWith(".exe") ||
                         s.EndsWith(".dll") ||
@@ -247,7 +241,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             }
             catch
             {
-                //gulp
+                //ignore for now
             }
 
             await Task.Delay(2500);//wait for reboot
@@ -255,7 +249,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             //reconnect serial port
             if(meadow.Initialize() == false)
             {
-                //find device with matching serial
+                //find device with matching serial //ToDo
             }
         }
     }
