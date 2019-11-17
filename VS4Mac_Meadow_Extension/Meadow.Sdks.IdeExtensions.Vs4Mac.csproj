@@ -22,10 +22,10 @@
     <None Update="Templates\Meadow.Sdk.Templates.0.1.0.nupkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="WildernessLabs.Meadow.Template.0.2.4.nupkg">
+    <None Update="WildernessLabs.Meadow.Template.0.2.5.nupkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="WildernessLabs.Meadow.Template.0.2.5.nupkg">
+    <None Update="WildernessLabs.Meadow.Template.0.3.5.nupkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
