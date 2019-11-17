@@ -28,14 +28,19 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             messageEventHandler = OnMeadowMessage;
         }
 
+        object _lock = new object();
+
         private void OnMeadowMessage(object sender, MeadowMessageEventArgs args)
         {
-            if (outputMonitor == null)
+            lock (_lock)
             {
-                outputMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetOutputProgressMonitor("Meadow", IconId.Null, true, true, true);
-            }
+                if (outputMonitor == null)
+                {
+                    outputMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetOutputProgressMonitor("Meadow", IconId.Null, true, true, true);
+                }
 
-            outputMonitor.Log.WriteLine(args.Message);
+                outputMonitor.Log.WriteLine(args.Message);
+            }
         }
 
         public ProcessAsyncOperation Execute(ExecutionCommand command, OperationConsole console)
