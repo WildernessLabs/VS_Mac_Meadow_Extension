@@ -4,28 +4,19 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MonoDevelop.Addins" Version="0.4.7" />
-    <PackageReference Include="WildernessLabs.Meadow.CLI.Core.Unsigned" Version="0.4.3" />
   </ItemGroup>
   <ItemGroup>
     <None Remove=".DS_Store" />
     <None Remove="Templates\MeadowConsoleProject.xpt.xml" />
-    <None Remove="icons\project-microframework-console-32.png" />
-    <None Remove="icons\project-microframework-console-32%402x.png" />
-    <None Remove="icons\project-microframework-library-32.png" />
-    <None Remove="icons\project-microframework-library-32%402x.png" />
-    <None Remove="WildernessLabs.Meadow.Template.0.2.2.nupkg" />
   </ItemGroup>
   <ItemGroup>
     <AddinReference Include="MonoDevelop.Debugger" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="Templates\Meadow.Sdk.Templates.0.1.0.nupkg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="WildernessLabs.Meadow.Template.0.2.5.nupkg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="WildernessLabs.Meadow.Template.0.3.5.nupkg">
+    <ProjectReference Include="..\..\Meadow.CLI\Meadow.CLI.Core\Meadow.CLI.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="WildernessLabs.Meadow.Template.0.3.6.nupkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
