@@ -242,7 +242,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             try
             {
-                MeadowDeviceManager.ResetTargetMcu(meadow);
+                MeadowDeviceManager.ResetMeadow(meadow, 0);
             }
             catch
             {
