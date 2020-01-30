@@ -8,6 +8,7 @@
   <ItemGroup>
     <None Remove=".DS_Store" />
     <None Remove="Templates\MeadowConsoleProject.xpt.xml" />
+    <None Remove="WildernessLabs.Meadow.Template.0.3.6.nupkg" />
   </ItemGroup>
   <ItemGroup>
     <AddinReference Include="MonoDevelop.Debugger" />
@@ -16,7 +17,7 @@
     <ProjectReference Include="..\..\Meadow.CLI\Meadow.CLI.Core\Meadow.CLI.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="WildernessLabs.Meadow.Template.0.3.6.nupkg">
+    <None Update="WildernessLabs.Meadow.Template.0.3.8.nupkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
