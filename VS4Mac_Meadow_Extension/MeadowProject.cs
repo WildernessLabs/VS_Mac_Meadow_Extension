@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using MonoDevelop.Core;
 using MonoDevelop.Core.Assemblies;
@@ -13,12 +14,30 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
     [ExportProjectModelExtension, AppliesTo("Meadow")]
     public class MeadowProject : DotNetProjectExtension
     {
+
+        static public IDeploymentTargetsManager DeploymentTargetsManager;
+    
         // Note: see https://github.com/mhutch/MonoDevelop.AddinMaker/blob/eff386bfcce05918dbcfe190e9c2ed8513fe92ff/MonoDevelop.AddinMaker/AddinProjectFlavor.cs#L16 for better implementation 
 
         // Called after the project finishes loading
         protected override void OnEndLoad()
         {
             base.OnEndLoad();
+
+
+            switch (GetRunningPlatform())
+            {
+                //case Platform.Linux:
+                    //Console.WriteLine("DeploymentTargetsManagerLinux: Loading Linux");
+                    //DeploymentTargetsManager = new DeploymentTargetsManagerLinux();
+                    
+                    //break;
+                default:
+                    Console.WriteLine("DeploymentTargetsManagerLinux: Loading Mac");
+                    DeploymentTargetsManager = new DeploymentTargetsManagerMac();                    
+                    break;
+            }
+            
 
             Console.WriteLine("WLABS: OnEndLoad");
 
@@ -32,6 +51,32 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 DeploymentTargetsManager.StartPollingForDevices();
             }
         }
+        
+        
+    public enum Platform { Windows, Linux, Mac }
+    public Platform GetRunningPlatform()
+    {
+        switch (Environment.OSVersion.Platform)
+        {
+            case PlatformID.Unix:
+                // Well, there are chances MacOSX is reported as Unix instead of MacOSX.
+                // Instead of platform check, we'll do a feature checks (Mac specific root folders)
+                if (Directory.Exists("/Applications")
+                    & Directory.Exists("/System")
+                    & Directory.Exists("/Users")
+                    & Directory.Exists("/Volumes"))
+                    return Platform.Mac;
+                else
+                    return Platform.Linux;
+
+            case PlatformID.MacOSX:
+                return Platform.Mac;
+
+            default:
+                return Platform.Windows;
+        }
+    }
+        
 
         protected override void OnPrepareForEvaluation(MSBuildProject project)
         {
@@ -43,7 +88,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             base.Dispose();
             // stop listening
             DeploymentTargetsManager.DeviceListChanged -= OnExecutionTargetsChanged;
-            DeploymentTargetsManager.StopPollingForDevices();
+            DeploymentTargetsManager.Dispose();
         }
 
         // targets changed event handler.
@@ -52,13 +97,13 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             //here if the target changes, we can look for the correct device based on the Id
 
             // update UI on UI thread.
-            Runtime.RunInMainThread(() => base.OnExecutionTargetsChanged());
+         //   Runtime.RunInMainThread(() => base.OnExecutionTargetsChanged());
         }
 
         // probably called when the configuration changes
         protected override IEnumerable<ExecutionTarget> OnGetExecutionTargets(ConfigurationSelector configuration)
         {
-            return DeploymentTargetsManager.Targets;
+            return DeploymentTargetsManager.GetTargetList();
         }
 
         //protected override bool OnGetSupportsFormat(Projects.MSBuild.MSBuildFileFormat format)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Meadow.CLI.DeviceMonitor;
 using MeadowCLI.DeviceManagement;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
@@ -10,21 +11,21 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
     /// <summary>
     /// Manages the deployment targets in the toolbar and other places.
     /// </summary>
-    public static class DeploymentTargetsManager
+    public class DeploymentTargetsManagerMac : IDeploymentTargetsManager
     {
         /// <summary>
         /// A collection of connected and ready Meadow devices
         /// </summary>
-        public static List<MeadowDeviceExecutionTarget> Targets { get; } = new List<MeadowDeviceExecutionTarget>();
+        public List<MeadowDeviceExecutionTarget> Targets { get; } = new List<MeadowDeviceExecutionTarget>();
 
         //    private static Timer devicePollTimer;
         //    private static object eventLock = new object();
-        private static bool isPolling;
-        private static CancellationTokenSource cts;
+        private bool isPolling;
+        private CancellationTokenSource cts;
 
-        public static event Action<object> DeviceListChanged;
+        public event Action<object> DeviceListChanged;
 
-        public static async Task StartPollingForDevices()
+        public async Task StartPollingForDevices()
         {
             if(isPolling == true)
             {
@@ -49,19 +50,19 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             isPolling = false;
         }
 
-        public static void StopPollingForDevices()
+        public void StopPollingForDevices()
         {
             cts.Cancel();
         }
 
-        public static async Task PausePollingForDevices(int seconds = 15)
+        public async Task PausePollingForDevices(int seconds = 15)
         {
             StopPollingForDevices();
             await Task.Delay(seconds * 1000);
             StartPollingForDevices();
         }
 
-        private static async Task UpdateTargetsList(CancellationToken ct)
+        private async Task UpdateTargetsList(CancellationToken ct)
         {
             var serialPorts = MeadowDeviceManager.FindSerialDevices();
 
@@ -70,7 +71,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 if (ct.IsCancellationRequested)
                     break;
 
-                if (Targets.Any(t => t.MeadowDevice.SerialPort.PortName == port))
+                if (Targets.Any(t => t.meadowSerialDevice.connection?.USB?.DevicePort == port))
                     continue;
 
                 var timeout = Task<MeadowDevice>.Delay(1000);
@@ -84,15 +85,16 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 {
                     //we should really just have the execution target own an instance of MeadowDevice 
                     Targets.Add(new MeadowDeviceExecutionTarget(meadow));
-                    meadow.SerialPort.Close();
+                    //meadow.CloseConnection();
                     DeviceListChanged?.Invoke(null);
+                    meadow.StatusChange += StatusDisplay;
                 }
             }
 
             var removeList = new List<MeadowDeviceExecutionTarget>();
             foreach(var t in Targets)
             {
-                if(serialPorts.Any(p => p == t.MeadowDevice.SerialPort.PortName) == false)
+                if(serialPorts.Any(p => p == t.meadowSerialDevice.connection?.USB?.DevicePort) == false)
                 {
                     removeList.Add(t);
                 }
@@ -100,9 +102,45 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             foreach(var r in removeList)
             {
+                r.meadowSerialDevice.StatusChange -= StatusDisplay;
                 Targets.Remove(r);
                 DeviceListChanged?.Invoke(null);
             }
+        }
+
+        public void StatusDisplay(object sender, MeadowSerialDevice.DeviceStatus status)
+        {
+            var meadow = (MeadowSerialDevice)sender;
+
+            switch (status)
+            {
+                case MeadowSerialDevice.DeviceStatus.Disconnected:
+
+                    Task.Run(() =>
+                    {
+                        Thread.Sleep(3000);
+
+                        var connection = new Connection()
+                        {
+                            Mode = MeadowMode.MeadowMono,
+                            USB = new Connection.USB_interface()
+                            {                
+                                 DevicePort = meadow.connection.USB.DevicePort,
+                            }
+                        };
+                        meadow.connection = connection;
+                    });
+                    break;
+            }
+        }
+        
+        public MeadowDeviceExecutionTarget[] GetTargetList()
+        {
+                return Targets.ToArray();
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

@@ -9,6 +9,8 @@ using System;
 using MonoDevelop.Core.ProgressMonitoring;
 using MeadowCLI.Hcom;
 using System.IO;
+using Meadow.CLI.DeviceManagement;
+using System.Diagnostics;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -16,7 +18,9 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
     {
         private ProgressMonitor outputMonitor;
         private EventHandler<MeadowMessageEventArgs> messageEventHandler;
-        private MeadowSerialDevice meadowExecutionTarget;
+        private MeadowDeviceExecutionTarget meadowExecutionTarget;
+        
+
 
         public bool CanExecute(ExecutionCommand command)
         {   //returning false here swaps the play button with a build button 
@@ -26,6 +30,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         public MeadowExecutionHandler()
         {
             messageEventHandler = OnMeadowMessage;
+           //                     var pad = new Diagram.DiagramPad();
+           //         MonoDevelop.Ide.IdeApp.Workbench.ShowPad(pad, "123", "abc", "", null);
         }
 
         object _lock = new object();
@@ -46,17 +52,23 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         public ProcessAsyncOperation Execute(ExecutionCommand command, OperationConsole console)
         {
             var cmd = command as MeadowExecutionCommand;
+            
+            //get a ref to the new execution target
+            MeadowDeviceExecutionTarget newExecutionTarget = (cmd.Target as MeadowDeviceExecutionTarget);
 
             //unsubscribe from previous device if it exists
-            if(meadowExecutionTarget != null && messageEventHandler != null)
+            if (newExecutionTarget != meadowExecutionTarget)           
             {
-                meadowExecutionTarget.OnMeadowMessage -= messageEventHandler;
+                if (meadowExecutionTarget != null && meadowExecutionTarget.meadowSerialDevice != null)
+                {
+                    meadowExecutionTarget.meadowSerialDevice.OnMeadowMessage -= messageEventHandler;
+                    meadowExecutionTarget.meadowSerialDevice.StatusChange -= StatusDisplay;
+                }
+                meadowExecutionTarget = newExecutionTarget;
             }
 
-            //get a ref to the new execution target
-            meadowExecutionTarget = (cmd.Target as MeadowDeviceExecutionTarget).MeadowDevice;
-
-            meadowExecutionTarget.OnMeadowMessage += messageEventHandler;
+            meadowExecutionTarget.meadowSerialDevice.OnMeadowMessage += messageEventHandler;
+            meadowExecutionTarget.meadowSerialDevice.StatusChange += StatusDisplay;
 
             var cts = new CancellationTokenSource();
             var deployTask = DeployApp(cmd.Target as MeadowDeviceExecutionTarget, cmd.OutputDirectory, cts);
@@ -67,7 +79,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         //https://stackoverflow.com/questions/29798243/how-to-write-to-the-tool-output-pad-from-within-a-monodevelop-add-in
         async Task DeployApp(MeadowDeviceExecutionTarget target, string folder, CancellationTokenSource cts)
         {
-            DeploymentTargetsManager.StopPollingForDevices();
+            MeadowProject.DeploymentTargetsManager.StopPollingForDevices();
 
             ProgressMonitor toolMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetToolOutputProgressMonitor(true, cts);
             ProgressMonitor outMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetStatusProgressMonitor("Meadow", IconId.Null, true);
@@ -78,11 +90,11 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             try
             {
-                var meadow = target.MeadowDevice;
+                var meadow = target.meadowSerialDevice;
 
-                if(await InitializeMeadowDevice(meadow, monitor, cts) == false)
+                if (await InitializeMeadowDevice(meadow, monitor, cts) == false)
                 {
-                    throw new Exception("Failed to initialize Meadow");
+                    throw new Exception($"Failed to initialize Meadow {meadow.connection.ToString()}");
                 }
 
                 var meadowFiles = await GetFilesOnDevice(meadow, monitor, cts);
@@ -104,7 +116,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 monitor?.EndTask();
                 monitor?.Dispose();
 
-                DeploymentTargetsManager.StartPollingForDevices();
+                MeadowProject.DeploymentTargetsManager.StartPollingForDevices();
             }
         }
 
@@ -112,7 +124,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         {
             if (cts.IsCancellationRequested) return true;
 
-            await monitor.Log.WriteLineAsync("Initializing Meadow");
+            await monitor.Log.WriteLineAsync($"Initializing Meadow {meadow.connection.ToString()}");
 
             if (meadow == null)
             {
@@ -120,17 +132,57 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 return false;
             }
 
-            meadow.Initialize(false);
+            Console.WriteLine("MonoDisable");
             MeadowDeviceManager.MonoDisable(meadow);
-            await Task.Delay(3000); //give device time to reboot
 
-            if(meadow.Initialize() == false)
+            if (!(await meadow.AwaitStatus(5000, MeadowCLI.DeviceManagement.MeadowSerialDevice.DeviceStatus.PortOpen)).HasValue)
             {
-                monitor.ErrorLog.WriteLine("Couldn't initialize serial port");
+                await monitor.Log.WriteLineAsync("The Meadow has failed to restart.");
                 return false;
             }
             return true;
+
         }
+
+
+        public void StatusDisplay (object sender, MeadowSerialDevice.DeviceStatus status)
+        {
+        
+           switch (status)
+           {
+               case MeadowSerialDevice.DeviceStatus.Disconnected:
+                    {
+                        const string msg = "Meadow: Disconnected";
+                        outputMonitor?.Log.WriteLineAsync(msg);
+                    }
+                    break;
+               case MeadowSerialDevice.DeviceStatus.USBConnected:
+                    {
+                        const string msg = "Meadow: USB Connected";
+                        outputMonitor?.Log.WriteLineAsync(msg);
+                    }
+                    break;
+               case MeadowSerialDevice.DeviceStatus.PortOpen:
+                    {
+                        const string msg = "Meadow: Port open";
+                        outputMonitor?.Log.WriteLineAsync(msg);
+                    }
+                    break;
+               case MeadowSerialDevice.DeviceStatus.PortOpenGotInfo:
+                    {
+                        const string msg = "Meadow: Initalized";
+                        outputMonitor?.Log.WriteLineAsync(msg);
+                    }
+                    break;
+               case MeadowSerialDevice.DeviceStatus.Reboot:
+                    {
+                        const string msg = "Meadow: Rebooting";
+                        outputMonitor?.Log.WriteLineAsync(msg);
+                    }
+                    break;
+           }
+        }
+
 
         async Task<(List<string> files, List<UInt32> crcs)> GetFilesOnDevice(MeadowSerialDevice meadow, ProgressMonitor monitor, CancellationTokenSource cts)
         {
@@ -149,7 +201,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             return meadowFiles;
         }
 
-        async Task<(List<string> files, List<UInt32> crcs)>     GetLocalFiles(ProgressMonitor monitor, CancellationTokenSource cts, string folder)
+        async Task<(List<string> files, List<UInt32> crcs)> GetLocalFiles(ProgressMonitor monitor, CancellationTokenSource cts, string folder)
         {
             //get list of files in folder
             var paths = Directory.EnumerateFiles(folder, "*.*", SearchOption.TopDirectoryOnly)
@@ -240,22 +292,14 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             MeadowDeviceManager.MonoEnable(meadow);
 
-            try
-            {
-                MeadowDeviceManager.ResetMeadow(meadow, 0);
-            }
-            catch
-            {
-                //ignore for now
-            }
+            MeadowDeviceManager.ResetMeadow(meadow, 0);
 
-            await Task.Delay(2500);//wait for reboot
 
-            //reconnect serial port
-            if(meadow.Initialize() == false)
+            if (!(await meadow.AwaitStatus(5000, MeadowCLI.DeviceManagement.MeadowSerialDevice.DeviceStatus.PortOpen)).HasValue)
             {
-                //find device with matching serial //ToDo
+                await monitor.Log.WriteLineAsync("The Meadow has failed to restart.");
             }
+           
         }
     }
 }
