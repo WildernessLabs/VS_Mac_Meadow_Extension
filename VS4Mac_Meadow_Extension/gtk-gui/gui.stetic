@@ -1,0 +1,390 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<stetic-interface>
+  <configuration>
+    <images-root-path>..</images-root-path>
+    <target-gtk-version>2.12</target-gtk-version>
+  </configuration>
+  <import>
+    <widget-library name="../bin/Debug/net472/Meadow.Sdks.IdeExtensions.Vs4Mac.dll" internal="true" />
+  </import>
+  <widget class="Gtk.Bin" id="Meadow.Sdks.IdeExtensions.Vs4Mac.MeadowPadWidget" design-size="693 441">
+    <action-group name="Default">
+      <action id="ActionAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Action</property>
+        <property name="ShortLabel" translatable="yes">Action</property>
+      </action>
+      <action id="ViewAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">View</property>
+        <property name="ShortLabel" translatable="yes">View</property>
+      </action>
+      <action id="ClearConsoleAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Clear Console</property>
+        <property name="ShortLabel" translatable="yes">Debug</property>
+        <signal name="Activated" handler="OnClearConsoleActionActivated" />
+      </action>
+      <action id="saveAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Files</property>
+        <property name="ShortLabel" translatable="yes">Files</property>
+        <property name="StockId">gtk-save</property>
+      </action>
+      <action id="ListFilesAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">List Files</property>
+        <property name="ShortLabel" translatable="yes">List Files</property>
+      </action>
+      <action id="ListFilesAndCRCsAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">List Files and CRCs</property>
+        <property name="ShortLabel" translatable="yes">List Files and CRCs</property>
+      </action>
+      <action id="WriteFileAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Write File</property>
+        <property name="ShortLabel" translatable="yes">Write File</property>
+      </action>
+      <action id="DeleteFileAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Delete File</property>
+        <property name="ShortLabel" translatable="yes">Delete File</property>
+      </action>
+      <action id="EraseFlashAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Erase Flash</property>
+        <property name="ShortLabel" translatable="yes">Erase Flash</property>
+      </action>
+      <action id="VerifyErasedFlashAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Verify Erased Flash</property>
+        <property name="ShortLabel" translatable="yes">Verify Erased Flash</property>
+      </action>
+      <action id="openAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">File system</property>
+        <property name="ShortLabel" translatable="yes">File system</property>
+        <property name="StockId">gtk-open</property>
+      </action>
+      <action id="PartitionFileSystemAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Partition File System</property>
+        <property name="ShortLabel" translatable="yes">Partition File System</property>
+      </action>
+      <action id="MountFileSystemAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Mount File System</property>
+        <property name="ShortLabel" translatable="yes">Mount File System</property>
+      </action>
+      <action id="InitalizeFileSystemAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Initalize File System</property>
+        <property name="ShortLabel" translatable="yes">Initalize File System</property>
+      </action>
+      <action id="CreateFileSystemAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Create File System</property>
+        <property name="ShortLabel" translatable="yes">Create File System</property>
+      </action>
+      <action id="FormatFileSystemAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Format File System</property>
+        <property name="ShortLabel" translatable="yes">Format File System</property>
+      </action>
+      <action id="cdromAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">MeadowOS</property>
+        <property name="ShortLabel" translatable="yes">MeadowOS</property>
+        <property name="StockId">gtk-cdrom</property>
+      </action>
+      <action id="DownloadLatestVersionAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Download latest version</property>
+        <property name="ShortLabel" translatable="yes">Download latest version</property>
+      </action>
+      <action id="FlashMeadowOSAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Flash MeadowOS</property>
+        <property name="ShortLabel" translatable="yes">Flash MeadowOS</property>
+      </action>
+      <action id="DeveloperAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Developer</property>
+        <property name="ShortLabel" translatable="yes">Developer</property>
+      </action>
+      <action id="SetDeveloper1Action">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Set developer1</property>
+        <property name="ShortLabel" translatable="yes">Set developer1</property>
+      </action>
+      <action id="SetDeveloper2Action">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Set developer2</property>
+        <property name="ShortLabel" translatable="yes">Set developer2</property>
+      </action>
+      <action id="SetDeveloper3Action">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Set developer3</property>
+        <property name="ShortLabel" translatable="yes">Set developer3</property>
+      </action>
+      <action id="SetDeveloper4Action">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">Set developer4</property>
+        <property name="ShortLabel" translatable="yes">Set developer4</property>
+      </action>
+    </action-group>
+    <property name="MemberName" />
+    <property name="Visible">False</property>
+    <child>
+      <widget class="Gtk.VBox" id="vbox2">
+        <property name="MemberName" />
+        <property name="Spacing">6</property>
+        <child>
+          <widget class="Gtk.HBox" id="hbox1">
+            <property name="MemberName" />
+            <property name="Spacing">6</property>
+            <child>
+              <widget class="Gtk.MenuBar" id="menubar1">
+                <property name="MemberName" />
+                <node name="menubar1" type="Menubar">
+                  <node type="Menu" action="ActionAction">
+                    <node type="Menu" action="saveAction">
+                      <node type="Menuitem" action="ListFilesAction" />
+                      <node type="Menuitem" action="ListFilesAndCRCsAction" />
+                      <node type="Menuitem" action="WriteFileAction" />
+                      <node type="Menuitem" action="DeleteFileAction" />
+                      <node type="Menuitem" action="EraseFlashAction" />
+                      <node type="Menuitem" action="VerifyErasedFlashAction" />
+                    </node>
+                    <node type="Menu" action="openAction">
+                      <node type="Menuitem" action="PartitionFileSystemAction" />
+                      <node type="Menuitem" action="MountFileSystemAction" />
+                      <node type="Menuitem" action="InitalizeFileSystemAction" />
+                      <node type="Menuitem" action="CreateFileSystemAction" />
+                      <node type="Menuitem" action="FormatFileSystemAction" />
+                    </node>
+                    <node type="Menu" action="cdromAction">
+                      <node type="Menuitem" action="DownloadLatestVersionAction" />
+                      <node type="Menuitem" action="FlashMeadowOSAction" />
+                    </node>
+                    <node type="Menu" action="DeveloperAction">
+                      <node type="Menuitem" action="SetDeveloper1Action" />
+                      <node type="Menuitem" action="SetDeveloper2Action" />
+                      <node type="Menuitem" action="SetDeveloper3Action" />
+                      <node type="Menuitem" action="SetDeveloper4Action" />
+                    </node>
+                  </node>
+                  <node type="Menu" action="ViewAction">
+                    <node type="Menuitem" action="ClearConsoleAction" />
+                  </node>
+                </node>
+              </widget>
+              <packing>
+                <property name="Position">0</property>
+                <property name="AutoSize">True</property>
+                <property name="Expand">False</property>
+                <property name="Fill">False</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="Gtk.Label" id="labelState">
+                <property name="MemberName" />
+                <property name="LabelProp" translatable="yes">&lt;connection&gt;</property>
+                <property name="UseMarkup">True</property>
+              </widget>
+              <packing>
+                <property name="Position">1</property>
+                <property name="AutoSize">False</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="Gtk.HBox" id="hbox2">
+                <property name="MemberName" />
+                <property name="Spacing">6</property>
+                <child>
+                  <widget class="Gtk.RadioButton" id="radioMonoEnabled">
+                    <property name="MemberName" />
+                    <property name="CanFocus">True</property>
+                    <property name="Label" translatable="yes">Mono Enabled</property>
+                    <property name="Active">True</property>
+                    <property name="DrawIndicator">True</property>
+                    <property name="HasLabel">True</property>
+                    <property name="UseUnderline">True</property>
+                    <property name="Group">group1</property>
+                    <signal name="Clicked" handler="OnRadioEnabledClicked" />
+                  </widget>
+                  <packing>
+                    <property name="Position">0</property>
+                    <property name="AutoSize">False</property>
+                    <property name="Expand">False</property>
+                  </packing>
+                </child>
+                <child>
+                  <widget class="Gtk.RadioButton" id="radioMonoDisabled">
+                    <property name="MemberName" />
+                    <property name="CanFocus">True</property>
+                    <property name="Label" translatable="yes">Disabled</property>
+                    <property name="DrawIndicator">True</property>
+                    <property name="HasLabel">True</property>
+                    <property name="UseUnderline">True</property>
+                    <property name="Group">group1</property>
+                    <signal name="Clicked" handler="OnRadioDisabledClicked" />
+                  </widget>
+                  <packing>
+                    <property name="Position">1</property>
+                    <property name="AutoSize">False</property>
+                    <property name="Expand">False</property>
+                  </packing>
+                </child>
+                <child>
+                  <widget class="Gtk.Image" id="image1">
+                    <property name="MemberName" />
+                    <property name="Xalign">1</property>
+                  </widget>
+                  <packing>
+                    <property name="Position">2</property>
+                    <property name="AutoSize">True</property>
+                    <property name="Expand">False</property>
+                    <property name="Fill">False</property>
+                  </packing>
+                </child>
+              </widget>
+              <packing>
+                <property name="Position">2</property>
+                <property name="AutoSize">True</property>
+              </packing>
+            </child>
+          </widget>
+          <packing>
+            <property name="Position">0</property>
+            <property name="AutoSize">True</property>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.Label" id="labelInfo">
+            <property name="MemberName" />
+            <property name="Xalign">0</property>
+            <property name="LabelProp" translatable="yes">info:</property>
+            <property name="UseMarkup">True</property>
+            <property name="Selectable">True</property>
+          </widget>
+          <packing>
+            <property name="Position">1</property>
+            <property name="AutoSize">True</property>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.ScrolledWindow" id="GtkScrolledWindow">
+            <property name="MemberName" />
+            <property name="ShadowType">In</property>
+            <child>
+              <widget class="Gtk.TextView" id="textview1">
+                <property name="MemberName" />
+                <property name="CanFocus">True</property>
+                <property name="ShowScrollbars">True</property>
+                <property name="Editable">False</property>
+                <property name="Text" translatable="yes" />
+              </widget>
+            </child>
+          </widget>
+          <packing>
+            <property name="Position">2</property>
+            <property name="AutoSize">True</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.Entry" id="entry1">
+            <property name="MemberName" />
+            <property name="CanFocus">True</property>
+            <property name="IsEditable">True</property>
+            <property name="InvisibleChar">•</property>
+          </widget>
+          <packing>
+            <property name="Position">3</property>
+            <property name="AutoSize">True</property>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
+        </child>
+      </widget>
+    </child>
+  </widget>
+  <widget class="Gtk.Dialog" id="Meadow.Sdks.IdeExtensions.Vs4Mac.Gui.MeadowSelect" design-size="400 300">
+    <property name="MemberName" />
+    <property name="WindowPosition">CenterOnParent</property>
+    <property name="Buttons">2</property>
+    <property name="HelpButton">False</property>
+    <child internal-child="VBox">
+      <widget class="Gtk.VBox" id="dialog1_VBox">
+        <property name="MemberName" />
+        <property name="BorderWidth">2</property>
+        <child>
+          <widget class="Gtk.ScrolledWindow" id="GtkScrolledWindow">
+            <property name="MemberName" />
+            <property name="ShadowType">In</property>
+            <child>
+              <widget class="Gtk.NodeView" id="nodeview1">
+                <property name="MemberName" />
+                <property name="CanFocus">True</property>
+                <property name="ShowScrollbars">True</property>
+                <property name="EnableSearch">False</property>
+                <property name="HeadersVisible">False</property>
+              </widget>
+            </child>
+          </widget>
+          <packing>
+            <property name="Position">0</property>
+            <property name="AutoSize">True</property>
+          </packing>
+        </child>
+      </widget>
+    </child>
+    <child internal-child="ActionArea">
+      <widget class="Gtk.HButtonBox" id="dialog1_ActionArea">
+        <property name="MemberName" />
+        <property name="Spacing">10</property>
+        <property name="BorderWidth">5</property>
+        <property name="Size">2</property>
+        <property name="LayoutStyle">End</property>
+        <child>
+          <widget class="Gtk.Button" id="buttonCancel">
+            <property name="MemberName" />
+            <property name="CanDefault">True</property>
+            <property name="CanFocus">True</property>
+            <property name="UseStock">True</property>
+            <property name="Type">StockItem</property>
+            <property name="StockId">gtk-cancel</property>
+            <property name="ResponseId">-6</property>
+            <property name="label">gtk-cancel</property>
+          </widget>
+          <packing>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.Button" id="buttonOk">
+            <property name="MemberName" />
+            <property name="CanDefault">True</property>
+            <property name="CanFocus">True</property>
+            <property name="UseStock">True</property>
+            <property name="Type">StockItem</property>
+            <property name="StockId">gtk-ok</property>
+            <property name="ResponseId">-5</property>
+            <property name="label">gtk-ok</property>
+          </widget>
+          <packing>
+            <property name="Position">1</property>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
+        </child>
+      </widget>
+    </child>
+  </widget>
+</stetic-interface>

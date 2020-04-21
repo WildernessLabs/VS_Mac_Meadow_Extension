@@ -9,9 +9,25 @@
     <None Remove=".DS_Store" />
     <None Remove="Templates\MeadowConsoleProject.xpt.xml" />
     <None Remove="WildernessLabs.Meadow.Template.0.3.6.nupkg" />
+    <None Remove="MeadowLogo.png" />
   </ItemGroup>
   <ItemGroup>
     <AddinReference Include="MonoDevelop.Debugger" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gtk-sharp-2.0</Package>
+    </Reference>
+    <Reference Include="gdk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gtk-sharp-2.0</Package>
+    </Reference>
+    <Reference Include="Mono.Posix" />
+  </ItemGroup>  
+  <ItemGroup>
+    <EmbeddedResource Include="gtk-gui\gui.stetic">
+      <LogicalName>gui.stetic</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MeadowLogo.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Meadow.CLI\Meadow.CLI.Core\Meadow.CLI.Core.csproj" />
@@ -23,5 +39,9 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="DeploymentTargets\" />
+    <Folder Include="Gui\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="LogView.cs" />
   </ItemGroup>
 </Project>
