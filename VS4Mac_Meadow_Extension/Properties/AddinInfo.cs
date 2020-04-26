@@ -11,4 +11,4 @@ using Mono.Addins.Description;
 [assembly: AddinName("Meadow")]
 [assembly: AddinCategory("IDE extensions")]
 [assembly: AddinDescription("Build and deployment tools for Meadow by Wilderness Labs")]
-[assembly: AddinAuthor("Bryan Costanich, Adrian Stevens, Brian Kim")]
+[assembly: AddinAuthor("Bryan Costanich, Adrian Stevens, Brian Kim, Stuart Johnson")]
