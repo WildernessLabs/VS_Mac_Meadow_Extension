@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 using Meadow.CLI.DeviceManagement;
 using Meadow.CLI.DeviceMonitor;
 using MeadowCLI.DeviceManagement;
+using MonoDevelop.Ide.Gui;
+using System.Linq;
+using MeadowCLI;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -23,7 +26,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         public  event Action<object> DeviceListChanged;
 
-
         public DeploymentTargetsManagerLinux()
         {
             ConnectionMonitor = new ConnectionMonitorUdev(true);
@@ -34,19 +36,33 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             foreach (Connection connection in ConnectionMonitor.GetDeviceList())
             {
                 InitalizeMeadow(connection);
-            }            
+            }
         }
-
-
+        
+       
         void RemoveExpiredTargets()
         {
-            
             lock (_lockObject)
             {
-                if (Targets.RemoveAll(x => x.meadowSerialDevice.connection.Removed && x.meadowSerialDevice.connection.TimeRemoved.AddSeconds(SecondsToRemove) < DateTime.UtcNow) > 0)
+                var expiredTargets = Targets.FindAll(x => x.meadowSerialDevice.connection.Removed && x.meadowSerialDevice.connection.TimeRemoved.AddSeconds(SecondsToRemove) < DateTime.UtcNow);
+                foreach (var target in expiredTargets)
                 {
-                    DeviceListChanged?.Invoke(null);
+                    //Check if meadow is NOT in boot/dfu mode
+                    if (!Meadow.CLI.Internals.Udev.Udev.GetSerialNumbers("0483", "df11", "usb").Contains(target.SerialNumber))
+                    {
+                        // Remove Pad from Monodevelop
+                        Gtk.Application.Invoke(delegate
+                        {
+                            foreach (var pad in MonoDevelop.Ide.IdeApp.Workbench.Pads.FindAll(x => x?.Content is MeadowPad && ((MeadowPad)x.Content).Target == target))
+                            {
+                                target.meadowPad.Window.Visible = false;
+                                MonoDevelop.Ide.IdeApp.Workbench.Pads.Remove(pad);
+                            }
+                        });
+                        Targets.Remove(target);
+                    }
                 }
+                if (expiredTargets.Count > 0) DeviceListChanged?.Invoke(null);                
             }
         }
 
@@ -57,10 +73,17 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 return Targets.ToArray();
             }
         }
+        
+        public uint Count
+        {
+            get
+            {
+                return (uint)Targets.Count;
+            }
+        }
 
         private void DeviceNew(object sender, Connection connection)
         {
-        
             //First we need to check if we already have a target for this device.
             var target = Targets.Find(x => x.meadowSerialDevice.connection.IsMatch(connection));
 
@@ -86,51 +109,34 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         async Task<MeadowDeviceExecutionTarget> InitalizeMeadow(Connection connection)
         {
             MeadowDeviceExecutionTarget target = null;
-               
-            var meadowTask = MeadowDeviceManager.GetMeadowForConnection(connection);
 
-            if (await Task.WhenAny(meadowTask, Task.Delay(5000)) == meadowTask)
+            await Task<MeadowDeviceExecutionTarget>.Run(() =>
             {
-                var meadowSerialDevice = meadowTask.Result;
+               var meadowSerialDevice = new MeadowSerialDevice(true);
+               if (MeadowDeviceManager.CurrentDevice == null || (MeadowDeviceManager.CurrentDevice?.connection.Removed ?? true)) MeadowDeviceManager.CurrentDevice = meadowSerialDevice;
 
-                if (meadowSerialDevice != null)
+                lock (_lockObject)
                 {
-                    target = new MeadowDeviceExecutionTarget(meadowSerialDevice);
+                    target = new MeadowDeviceExecutionTarget(meadowSerialDevice,connection);
                     if (target != null)
                     {
                         Console.WriteLine($"DeploymentTargetsManagerLinux Added: {target}");
-                        lock (_lockObject)
-                        {
-                            Targets.Add(target);
-                        }
+                        Targets.Add(target);
+                        target.SerialNumberSet += Target_SerialNumberSet;
                         DeviceListChanged?.Invoke(target);
                     }
                 }
-            }
-
+            });
             return target;
         }
 
-        
-
-        public async Task StartPollingForDevices()
+        void Target_SerialNumberSet(object sender, string e)
         {
-            //UsbDeviceManager takes care of it
         }
 
-        public  void StopPollingForDevices()
-        {
-            //UsbDeviceManager takes care of it
-        }
-
-        public  async Task PausePollingForDevices(int seconds = 15)
-        {
-           //UsbDeviceManager takes care of it
-        }
 
         public void Dispose()
-        {
-        
+        {        
             ConnectionMonitor.DeviceNew -= DeviceNew;
             ConnectionMonitor.DeviceRemoved -= DeviceRemoved;        
         }

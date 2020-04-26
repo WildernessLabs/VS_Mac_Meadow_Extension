@@ -25,42 +25,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         public event Action<object> DeviceListChanged;
 
-        public async Task StartPollingForDevices()
-        {
-            if(isPolling == true)
-            {
-                return;
-            }
-
-            isPolling = true;
-
-            cts = new CancellationTokenSource();
-
-            while (isPolling)
-            {
-                await UpdateTargetsList(cts.Token);
-                await Task.Delay(2000);
-
-                if(cts.IsCancellationRequested)
-                {
-                    isPolling = false;
-                }
-            }
-
-            isPolling = false;
-        }
-
-        public void StopPollingForDevices()
-        {
-            cts.Cancel();
-        }
-
-        public async Task PausePollingForDevices(int seconds = 15)
-        {
-            StopPollingForDevices();
-            await Task.Delay(seconds * 1000);
-            StartPollingForDevices();
-        }
 
         private async Task UpdateTargetsList(CancellationToken ct)
         {
@@ -137,6 +101,14 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         public MeadowDeviceExecutionTarget[] GetTargetList()
         {
                 return Targets.ToArray();
+        }
+        
+        public uint Count
+        {
+            get
+            {
+                return (uint)Targets.Count;
+            }
         }
 
         public void Dispose()

@@ -22,6 +22,7 @@
       <Package>gtk-sharp-2.0</Package>
     </Reference>
     <Reference Include="Mono.Posix" />
+    <Reference Include="System.Net.Http" />
   </ItemGroup>  
   <ItemGroup>
     <EmbeddedResource Include="gtk-gui\gui.stetic">

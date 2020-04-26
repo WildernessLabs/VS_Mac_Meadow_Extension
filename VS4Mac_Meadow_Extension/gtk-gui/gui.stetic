@@ -7,7 +7,7 @@
   <import>
     <widget-library name="../bin/Debug/net472/Meadow.Sdks.IdeExtensions.Vs4Mac.dll" internal="true" />
   </import>
-  <widget class="Gtk.Bin" id="Meadow.Sdks.IdeExtensions.Vs4Mac.MeadowPadWidget" design-size="693 441">
+  <widget class="Gtk.Bin" id="Meadow.Sdks.IdeExtensions.Vs4Mac.MeadowPadWidget" design-size="723 441">
     <action-group name="Default">
       <action id="ActionAction">
         <property name="Type">Action</property>
@@ -31,20 +31,26 @@
         <property name="ShortLabel" translatable="yes">Files</property>
         <property name="StockId">gtk-save</property>
       </action>
-      <action id="ListFilesAction">
+      <action id="directoryAction">
         <property name="Type">Action</property>
         <property name="Label" translatable="yes">List Files</property>
         <property name="ShortLabel" translatable="yes">List Files</property>
+        <property name="StockId">gtk-directory</property>
+        <signal name="Activated" handler="OnListFilesActionActivated" />
       </action>
-      <action id="ListFilesAndCRCsAction">
+      <action id="directoryAction1">
         <property name="Type">Action</property>
         <property name="Label" translatable="yes">List Files and CRCs</property>
         <property name="ShortLabel" translatable="yes">List Files and CRCs</property>
+        <property name="StockId">gtk-directory</property>
+        <signal name="Activated" handler="OnListFilesAndCRCsActionActivated" />
       </action>
-      <action id="WriteFileAction">
+      <action id="floppyAction">
         <property name="Type">Action</property>
-        <property name="Label" translatable="yes">Write File</property>
+        <property name="Label" translatable="yes">File Manager</property>
         <property name="ShortLabel" translatable="yes">Write File</property>
+        <property name="StockId">gtk-floppy</property>
+        <signal name="Activated" handler="OnFileManagerActionActivated" />
       </action>
       <action id="DeleteFileAction">
         <property name="Type">Action</property>
@@ -102,11 +108,13 @@
         <property name="Type">Action</property>
         <property name="Label" translatable="yes">Download latest version</property>
         <property name="ShortLabel" translatable="yes">Download latest version</property>
+        <signal name="Activated" handler="OnDownloadLatestVersionActionActivated" />
       </action>
       <action id="FlashMeadowOSAction">
         <property name="Type">Action</property>
         <property name="Label" translatable="yes">Flash MeadowOS</property>
         <property name="ShortLabel" translatable="yes">Flash MeadowOS</property>
+        <signal name="Activated" handler="OnFlashMeadowOSActionActivated" />
       </action>
       <action id="DeveloperAction">
         <property name="Type">Action</property>
@@ -133,6 +141,35 @@
         <property name="Label" translatable="yes">Set developer4</property>
         <property name="ShortLabel" translatable="yes">Set developer4</property>
       </action>
+      <action id="DebugConsoleOutputAction">
+        <property name="Type">Toggle</property>
+        <property name="Label" translatable="yes">Debug Console Output</property>
+        <property name="ShortLabel" translatable="yes">Console Debug Log</property>
+        <property name="DrawAsRadio">False</property>
+        <property name="Active">False</property>
+        <signal name="Toggled" handler="OnCheckConsoleDebugLogToggled" />
+      </action>
+      <action id="MeadowDataOutputAction">
+        <property name="Type">Toggle</property>
+        <property name="Label" translatable="yes">Meadow Data: Output</property>
+        <property name="ShortLabel" translatable="yes">Debug Data Output</property>
+        <property name="DrawAsRadio">False</property>
+        <property name="Active">False</property>
+      </action>
+      <action id="MeadowAppOutputAction">
+        <property name="Type">Toggle</property>
+        <property name="Label" translatable="yes">Meadow App: Output</property>
+        <property name="ShortLabel" translatable="yes">Meadow App: Output</property>
+        <property name="DrawAsRadio">False</property>
+        <property name="Active">True</property>
+      </action>
+      <action id="MeadowTraceOutputAction">
+        <property name="Type">Toggle</property>
+        <property name="Label" translatable="yes">Meadow Trace: Output</property>
+        <property name="ShortLabel" translatable="yes">Meadow Trace: Output</property>
+        <property name="DrawAsRadio">False</property>
+        <property name="Active">False</property>
+      </action>
     </action-group>
     <property name="MemberName" />
     <property name="Visible">False</property>
@@ -150,10 +187,9 @@
                 <node name="menubar1" type="Menubar">
                   <node type="Menu" action="ActionAction">
                     <node type="Menu" action="saveAction">
-                      <node type="Menuitem" action="ListFilesAction" />
-                      <node type="Menuitem" action="ListFilesAndCRCsAction" />
-                      <node type="Menuitem" action="WriteFileAction" />
-                      <node type="Menuitem" action="DeleteFileAction" />
+                      <node type="Menuitem" action="directoryAction" />
+                      <node type="Menuitem" action="directoryAction1" />
+                      <node type="Menuitem" action="floppyAction" />
                       <node type="Menuitem" action="EraseFlashAction" />
                       <node type="Menuitem" action="VerifyErasedFlashAction" />
                     </node>
@@ -177,6 +213,11 @@
                   </node>
                   <node type="Menu" action="ViewAction">
                     <node type="Menuitem" action="ClearConsoleAction" />
+                    <node type="Separator" />
+                    <node type="Menuitem" action="DebugConsoleOutputAction" />
+                    <node type="Menuitem" action="MeadowDataOutputAction" />
+                    <node type="Menuitem" action="MeadowAppOutputAction" />
+                    <node type="Menuitem" action="MeadowTraceOutputAction" />
                   </node>
                 </node>
               </widget>
@@ -212,7 +253,7 @@
                     <property name="HasLabel">True</property>
                     <property name="UseUnderline">True</property>
                     <property name="Group">group1</property>
-                    <signal name="Clicked" handler="OnRadioEnabledClicked" />
+                    <signal name="Pressed" handler="OnRadioMonoEnabledPressed" />
                   </widget>
                   <packing>
                     <property name="Position">0</property>
@@ -229,7 +270,7 @@
                     <property name="HasLabel">True</property>
                     <property name="UseUnderline">True</property>
                     <property name="Group">group1</property>
-                    <signal name="Clicked" handler="OnRadioDisabledClicked" />
+                    <signal name="Pressed" handler="OnRadioMonoDisabledPressed" />
                   </widget>
                   <packing>
                     <property name="Position">1</property>
@@ -380,6 +421,94 @@
           </widget>
           <packing>
             <property name="Position">1</property>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
+        </child>
+      </widget>
+    </child>
+  </widget>
+  <widget class="Gtk.Dialog" id="Meadow.Sdks.IdeExtensions.Vs4Mac.Gui.FileManager" design-size="400 416">
+    <property name="MemberName" />
+    <property name="WindowPosition">CenterOnParent</property>
+    <property name="Buttons">3</property>
+    <property name="HelpButton">False</property>
+    <child internal-child="VBox">
+      <widget class="Gtk.VBox" id="dialog1_VBox">
+        <property name="MemberName" />
+        <property name="BorderWidth">2</property>
+        <child>
+          <widget class="Gtk.ScrolledWindow" id="GtkScrolledWindow">
+            <property name="MemberName" />
+            <property name="ShadowType">In</property>
+            <child>
+              <widget class="Gtk.NodeView" id="nodeview1">
+                <property name="MemberName" />
+                <property name="CanFocus">True</property>
+                <property name="ShowScrollbars">True</property>
+              </widget>
+            </child>
+          </widget>
+          <packing>
+            <property name="Position">0</property>
+            <property name="AutoSize">True</property>
+          </packing>
+        </child>
+      </widget>
+    </child>
+    <child internal-child="ActionArea">
+      <widget class="Gtk.HButtonBox" id="dialog1_ActionArea">
+        <property name="MemberName" />
+        <property name="Spacing">10</property>
+        <property name="BorderWidth">5</property>
+        <property name="Size">3</property>
+        <property name="LayoutStyle">End</property>
+        <child>
+          <widget class="Gtk.Button" id="buttonAdd">
+            <property name="MemberName" />
+            <property name="CanDefault">True</property>
+            <property name="CanFocus">True</property>
+            <property name="UseStock">True</property>
+            <property name="Type">StockItem</property>
+            <property name="StockId">gtk-new</property>
+            <property name="ResponseId">-1</property>
+            <signal name="Clicked" handler="OnButtonAddClicked" />
+            <property name="label">gtk-new</property>
+          </widget>
+          <packing>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.Button" id="buttonDelete">
+            <property name="MemberName" />
+            <property name="CanDefault">True</property>
+            <property name="CanFocus">True</property>
+            <property name="UseStock">True</property>
+            <property name="Type">StockItem</property>
+            <property name="StockId">gtk-delete</property>
+            <property name="ResponseId">-1</property>
+            <signal name="Clicked" handler="OnButtonDeleteClicked" />
+            <property name="label">gtk-delete</property>
+          </widget>
+          <packing>
+            <property name="Position">1</property>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.Button" id="buttonClose">
+            <property name="MemberName" />
+            <property name="CanFocus">True</property>
+            <property name="Type">TextOnly</property>
+            <property name="Label" translatable="yes">Close</property>
+            <property name="UseUnderline">True</property>
+            <property name="ResponseId">0</property>
+          </widget>
+          <packing>
+            <property name="Position">2</property>
             <property name="Expand">False</property>
             <property name="Fill">False</property>
           </packing>

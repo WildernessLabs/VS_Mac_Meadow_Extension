@@ -16,12 +16,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
     {
         event Action<object> DeviceListChanged;
 
-        Task StartPollingForDevices();
-
-        void StopPollingForDevices();
-
-        Task PausePollingForDevices(int seconds);
-
         MeadowDeviceExecutionTarget[] GetTargetList();
+        uint Count { get; }
+
     }
 }
