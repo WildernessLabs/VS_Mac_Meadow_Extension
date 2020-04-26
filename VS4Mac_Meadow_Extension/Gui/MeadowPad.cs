@@ -1,4 +1,5 @@
-﻿using MeadowCLI.DeviceManagement;
+﻿using System.IO;
+using MeadowCLI.DeviceManagement;
 using MonoDevelop.Components;
 using MonoDevelop.Ide;
 using MonoDevelop.Ide.Gui;
@@ -9,23 +10,23 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
     {
         
         public MeadowPadWidget control { get; private set; }
-        MeadowSerialDevice meadowSerialDevice;
-        
-        public override Control Control => control ?? (control = new MeadowPadWidget(meadowSerialDevice));
+        public MeadowSerialDevice meadowSerialDevice { get; private set; }
+        public MeadowDeviceExecutionTarget Target { get; private set; }
+
+        public override Control Control => control; //?? (control = new MeadowPadWidget(meadowSerialDevice));
         //  public override string Id => "MeadowPad";
 
 
-        public MeadowPad(MeadowSerialDevice meadow)
+        public MeadowPad(MeadowDeviceExecutionTarget target, MeadowSerialDevice meadow)
         {
+            Target = target;
             meadowSerialDevice = meadow;
-            control = new MeadowPadWidget(meadowSerialDevice);            
+            control = new MeadowPadWidget(meadowSerialDevice, this);
         }
 
         protected override void Initialize(IPadWindow window)
         {
-            
             base.Initialize(window);
-            
             
             StartListeningForWorkspaceChanges();
             //window.PadHidden += (sender, e) => control.SaveNodeLocationsForSelectedProject();
@@ -33,8 +34,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             //Debug.WriteLine($"Bundle path: {NSBundle.MainBundle.BundlePath}");
             //Debug.WriteLine($"Bundle Resource path: {NSBundle.MainBundle.ResourcePath}");
             control.ShowAll();
-            
-                        
         }
 
         void StartListeningForWorkspaceChanges()
