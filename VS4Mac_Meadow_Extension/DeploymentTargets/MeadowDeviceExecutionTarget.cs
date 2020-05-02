@@ -16,7 +16,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
     /// Represents a Meadow Device execution target; which is the actual
     /// device that gets deployed to when executing.
     /// </summary>
-    public class MeadowDeviceExecutionTarget : ExecutionTarget
+    public class MeadowDeviceExecutionTarget : ExecutionTarget, IDisposable
     {
 
         static uint PadID = 0;
@@ -38,11 +38,9 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 {
                     meadowPad = new MeadowPad(this,meadowSerialDevice);
                     var pad = MonoDevelop.Ide.IdeApp.Workbench.ShowPad(meadowPad, (PadID++).ToString(), "Meadow", "bottom", MonoDevelop.Components.Docking.DockItemStatus.Dockable, new IconId("meadow"));
-                    pad.Sticky = true;
-                    pad.AutoHide = false;
-                    pad.BringToFront();
                     pad.Visible = true;
                     pad.IsOpenedAutomatically = true;
+                    pad.BringToFront();
                     
                     waitHandle.Set();
                 }
@@ -115,6 +113,11 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         override public string ToString()
         {
             return $"{Name}";
+        }
+
+        public void Dispose()
+        {
+            meadowSerialDevice?.Dispose();
         }
         
     }

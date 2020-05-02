@@ -36,15 +36,19 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         public ProcessAsyncOperation Execute(ExecutionCommand command, OperationConsole console)
         {
             var cmd = command as MeadowExecutionCommand;
-            
+            MeadowDeviceExecutionTarget target;
             //get a ref to the new execution target
-            var target = (cmd.Target as MeadowDeviceExecutionTarget);
+            //target = (cmd.Target as MeadowDeviceExecutionTarget);
             Task deployTask;
             var cts = new CancellationTokenSource();
-
-
-            //If there is more than one meadow, then open a list box    
-            if (MeadowProject.DeploymentTargetsManager.Count > 1)
+                        
+            if (MeadowProject.DeploymentTargetsManager.Count == 1)
+            {
+                target = MeadowProject.DeploymentTargetsManager.GetTargetList()[0];
+                deployTask = DeployApp(target, cmd.OutputDirectory, cts);
+                return new ProcessAsyncOperation(deployTask, cts);
+            }
+            else if (MeadowProject.DeploymentTargetsManager.Count > 1) //If there is more than one meadow, then open a list box
             {
                 var tcs = new TaskCompletionSource<ResponseType>();
                 var meadowList = new MeadowSelect(MeadowProject.DeploymentTargetsManager);
@@ -62,14 +66,10 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                     deployTask = DeployApp(target, cmd.OutputDirectory, cts);
                     return new ProcessAsyncOperation(deployTask, cts);
                 }
-                else
-                {
-                    return null;
-                }
             }
             
-            deployTask = DeployApp(target, cmd.OutputDirectory, cts);
-            return new ProcessAsyncOperation(deployTask, cts);
+             return null;
+            
         }
 
         
@@ -252,7 +252,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             MeadowDeviceManager.ResetMeadow(target.meadowSerialDevice, 0);
 
-           
         }
     }
 }

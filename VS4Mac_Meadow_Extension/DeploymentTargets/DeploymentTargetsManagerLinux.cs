@@ -136,9 +136,15 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
 
         public void Dispose()
-        {        
+        {
+
+            foreach (var target in Targets)
+            {
+                target.Dispose();
+            }
             ConnectionMonitor.DeviceNew -= DeviceNew;
-            ConnectionMonitor.DeviceRemoved -= DeviceRemoved;        
+            ConnectionMonitor.DeviceRemoved -= DeviceRemoved;
+            ConnectionMonitor.Dispose();
         }
         
     }
