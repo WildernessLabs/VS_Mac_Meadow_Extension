@@ -27,6 +27,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         public TextTag tagRed;
         public TextTag tagRedBold;
         public TextTag tagGreen;
+        public TextTag tagBlueBold;
         public TextTag tagBlue;
 
         public TextTag tagBlueDark;
@@ -109,9 +110,15 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             };
             this.textview1.Buffer.TagTable.Add(tagGreen);
 
-            tagBlue = new TextTag(null)
+            tagBlueBold = new TextTag(null)
             {
                 Weight = Pango.Weight.Bold,
+                Foreground = "blue"
+            };
+            this.textview1.Buffer.TagTable.Add(tagBlueBold);
+
+            tagBlue = new TextTag(null)
+            {
                 Foreground = "blue"
             };
             this.textview1.Buffer.TagTable.Add(tagBlue);
@@ -199,7 +206,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                                 sb.Append($"{spanRed}Port Closed</span>");
                                 break;
                             case MeadowSerialDevice.DeviceStatus.PortOpen:
-                                textview1.Buffer.InsertWithTags(ref iter, "Port Open\n", tagBlue);
+                                textview1.Buffer.InsertWithTags(ref iter, "Port Open\n", tagBlueBold);
                                 sb.Append($"{spanBlue}Port Open</span>");
                                 break;
                             case MeadowSerialDevice.DeviceStatus.PortOpenGotInfo:
@@ -313,7 +320,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                         if (MeadowDataOutputAction.Active) WriteToConsole($"{args.Message}\n", tagBlueDark);
                         break;
                     case MeadowMessageType.AppOutput:
-                        if (MeadowAppOutputAction.Active) WriteToConsole($"{args.Message}\n", tagBlue);
+                        if (MeadowAppOutputAction.Active) WriteToConsole($"{args.Message}", tagBlue);
                         break;
                     case MeadowMessageType.MeadowTrace:
                         if (MeadowTraceOutputAction.Active) WriteToConsole($"{args.Message}\n", tagGrey);
@@ -405,8 +412,5 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             fileManager.Destroy();
             if (!activeLogState) MeadowDataOutputAction.Active = false;
         }
-        
-        
-        
     }
 }
