@@ -24,6 +24,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         protected override void OnEndLoad()
         {
             base.OnEndLoad();
+
+            if (DeploymentTargetsManager != null) return;  //Already loaded
        
             switch (GetRunningPlatform())
             {
@@ -39,7 +41,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             
             var image = Xwt.Drawing.Image.FromResource("Meadow.Sdks.IdeExtensions.Vs4Mac.MeadowLogo.png");
             MonoDevelop.Ide.ImageService.AddIcon("meadow",image);
-           
+
 
             Console.WriteLine("WLABS: OnEndLoad");
 
@@ -54,29 +56,29 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         }
         
         
-    public enum Platform { Windows, Linux, Mac }
-    public Platform GetRunningPlatform()
-    {
-        switch (Environment.OSVersion.Platform)
+        public enum Platform { Windows, Linux, Mac }
+        public Platform GetRunningPlatform()
         {
-            case PlatformID.Unix:
-                // Well, there are chances MacOSX is reported as Unix instead of MacOSX.
-                // Instead of platform check, we'll do a feature checks (Mac specific root folders)
-                if (Directory.Exists("/Applications")
-                    & Directory.Exists("/System")
-                    & Directory.Exists("/Users")
-                    & Directory.Exists("/Volumes"))
+            switch (Environment.OSVersion.Platform)
+            {
+                case PlatformID.Unix:
+                    // Well, there are chances MacOSX is reported as Unix instead of MacOSX.
+                    // Instead of platform check, we'll do a feature checks (Mac specific root folders)
+                    if (Directory.Exists("/Applications")
+                        & Directory.Exists("/System")
+                        & Directory.Exists("/Users")
+                        & Directory.Exists("/Volumes"))
+                        return Platform.Mac;
+                    else
+                        return Platform.Linux;
+    
+                case PlatformID.MacOSX:
                     return Platform.Mac;
-                else
-                    return Platform.Linux;
-
-            case PlatformID.MacOSX:
-                return Platform.Mac;
-
-            default:
-                return Platform.Windows;
+    
+                default:
+                    return Platform.Windows;
+            }
         }
-    }
         
 
         protected override void OnPrepareForEvaluation(MSBuildProject project)
