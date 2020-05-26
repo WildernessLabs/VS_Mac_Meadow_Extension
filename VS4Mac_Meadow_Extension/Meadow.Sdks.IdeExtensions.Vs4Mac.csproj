@@ -11,13 +11,10 @@
     <None Remove="WildernessLabs.Meadow.Template.0.3.6.nupkg" />
   </ItemGroup>
   <ItemGroup>
-    <AddinReference Include="MonoDevelop.Debugger" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\Meadow.CLI\Meadow.CLI.Core\Meadow.CLI.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="WildernessLabs.Meadow.Template.0.4.1.nupkg">
+    <None Update="WildernessLabs.Meadow.Template.0.5.0.nupkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
