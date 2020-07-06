@@ -28,7 +28,31 @@
             path="WildernessLabs.Meadow.Template.0.5.0.nupkg"
             category="meadow/app/general"
             />
-        <!-- eventually add a lib project template -->
+        <Template
+            id="WildernessLabs.Meadow.Templates.BasicApp"
+            templateId="WildernessLabs.Meadow.Templates.BasicApp.FSharp"
+            _overrideName="Meadow Application"
+            _overrideDescription="Creates a new Meadow project."
+            path="WildernessLabs.Meadow.Template.0.5.0.nupkg"
+            category="meadow/app/general"
+            />
+        
+        <Template
+            id="WildernessLabs.Meadow.Templates.Library"
+            templateId="WildernessLabs.Meadow.Templates.Library"
+            _overrideName="Meadow Library"
+            _overrideDescription="Creates a new Meadow library."
+            path="WildernessLabs.Meadow.Template.0.5.0.nupkg"
+            category="meadow/library/general"
+            />
+        <Template
+            id="WildernessLabs.Meadow.Templates.Library.FSharp"
+            templateId="WildernessLabs.Meadow.Templates.Library.FSharp"
+            _overrideName="Meadow Library"
+            _overrideDescription="Creates a new Meadow library."
+            path="WildernessLabs.Meadow.Template.0.5.0.nupkg"
+            category="meadow/library/general"
+            />
     </Extension>
     
     <Extension path = "/MonoDevelop/ProjectModel/SerializableClasses">
