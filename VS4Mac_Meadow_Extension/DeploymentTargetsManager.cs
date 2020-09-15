@@ -35,7 +35,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             while (cts.IsCancellationRequested == false)
             {
-                await UpdateTargetsList(cts.Token);
+                await Task.Run(()=> UpdateTargetsList(GetMeadowSerialPorts(), cts.Token));
                 await Task.Delay(3000);
             }
 
@@ -47,81 +47,70 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             cts.Cancel();
         }
 
-        public static async Task PausePollingForDevices(int seconds = 15)
-        {
-            StopPollingForDevices();
-            await Task.Delay(seconds * 1000);
-            var t = StartPollingForDevices();
-        }
-
         //Experiemental use of ioreg to find serial ports for connected Meadow devices
         //Relies on string parsing - may break if macOS moves ioreg or the output of ioreg changes signifigantly
         //Adrian - my guess is, this is fairly stable 
-        static Task<List<string>> GetMeadowSerialPorts()
+        static List<string> GetMeadowSerialPorts()
         {
             Debug.WriteLine("Get Meadow Serial ports");
-            return Task.Run(() =>
+            var ports = new List<string>();
+
+            var psi = new ProcessStartInfo
             {
-                var ports = new List<string>();
+                FileName = "/usr/sbin/ioreg",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                Arguments = "-r -c IOUSBHostDevice -l"
+            };
 
-                var psi = new ProcessStartInfo
+            string output = string.Empty;
+
+            using (var p = Process.Start(psi))
+            {
+                if (p != null)
                 {
-                    FileName = "/usr/sbin/ioreg",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    Arguments = "-r -c IOUSBHostDevice -l"
-                };
+                    output = p.StandardOutput.ReadToEnd();
+                    p.WaitForExit();
+                }
+            }
 
-                string output = string.Empty;
+            //split into lines
+            var lines = output.Split("\n\r".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
-                using (var p = Process.Start(psi))
+            bool foundMeadow = false;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                //first level devices 
+                if (lines[i].IndexOf("+-o") == 0)
                 {
-                    if (p != null)
+                    //we reset here so we don't read a serial port name for a non-Meadow device
+                    foundMeadow = false;
+                    if (lines[i].Contains("Meadow"))
                     {
-                        output = p.StandardOutput.ReadToEnd();
-                        p.WaitForExit();
+                        //found a meadow device
+                        foundMeadow = true;
                     }
                 }
 
-                //split into lines
-                var lines = output.Split("\n\r".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-
-                bool foundMeadow = false;
-                for (int i = 0; i < lines.Length; i++)
+                //now find the IODialinDevice entry which contains the serial port name
+                if (foundMeadow && lines[i].Contains("IODialinDevice"))
                 {
-                    //first level devices 
-                    if (lines[i].IndexOf("+-o") == 0)
-                    {
-                        //we reset here so we don't read a serial port name for a non-Meadow device
-                        foundMeadow = false;
-                        if (lines[i].Contains("Meadow"))
-                        {
-                            //found a meadow device
-                            foundMeadow = true;
-                        }
-                    }
+                    int startIndex = lines[i].IndexOf("/");
+                    int endIndex = lines[i].IndexOf("\"", startIndex + 1);
+                    var port = lines[i].Substring(startIndex, endIndex - startIndex);
+                    Debug.WriteLine($"Found Meadow at {port}");
 
-                    //now find the IODialinDevice entry which contains the serial port name
-                    if (foundMeadow && lines[i].Contains("IODialinDevice"))
-                    {
-                        int startIndex = lines[i].IndexOf("/");
-                        int endIndex = lines[i].IndexOf("\"", startIndex + 1);
-                        var port = lines[i].Substring(startIndex, endIndex - startIndex);
-                        Debug.WriteLine($"Found Meadow at {port}");
-
-                        ports.Add(port);
-                    }
+                    ports.Add(port);
                 }
-                return ports;
-            });
+            }
+            return ports;
         }
 
-        private static async Task UpdateTargetsList(CancellationToken ct)
+        private static void UpdateTargetsList(List<string> serialPorts, CancellationToken ct)
         {
             Debug.WriteLine("Update targets list");
             //var serialPorts = MeadowDeviceManager.FindSerialDevices();
             //use the local hack version that leverages ioreg
-            var serialPorts = await GetMeadowSerialPorts();
 
             foreach (var port in serialPorts)
             {
