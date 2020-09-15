@@ -1,11 +1,10 @@
-﻿using System;
-using Mono.Addins;
+﻿using Mono.Addins;
 using Mono.Addins.Description;
 
 [assembly: Addin(
     "Meadow",
     Namespace = "WildernessLabs.Sdks",
-    Version = "0.6.3"
+    Version = "0.7.2"
 )]
 
 [assembly: AddinName("Meadow")]

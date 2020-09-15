@@ -9,9 +9,24 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
     /// </summary>
     public class MeadowDeviceExecutionTarget : ExecutionTarget
     {
-        public override string Id => MeadowDevice?.DeviceInfo.SerialNumber;
+        public override string Id
+        {
+            get
+            {
+                if(MeadowDevice?.DeviceInfo?.SerialNumber != null)
+                {
+                    return MeadowDevice?.DeviceInfo?.SerialNumber;
+                }
+                else
+                {
+                    return "Meadow F7";
+                }
+            }
+        }
 
-        public override string Name => "Meadow " + MeadowDevice?.DeviceInfo.SerialNumber.Substring("Serial Number: ".Length);
+        public override string Name => "Meadow " + MeadowDevice?.PortName;
+
+        //public override string Name => "Meadow " + MeadowDevice?.DeviceInfo.SerialNumber.Substring("Serial Number: ".Length);
 
         public MeadowSerialDevice MeadowDevice { get; private set; }
 

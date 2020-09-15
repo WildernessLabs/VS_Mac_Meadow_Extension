@@ -38,7 +38,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 {
                     outputMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetOutputProgressMonitor("Meadow", IconId.Null, true, true, true);
                 }
-
                 outputMonitor.Log.WriteLine(args.Message);
             }
         }
@@ -110,7 +109,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         async Task<bool> InitializeMeadowDevice(MeadowSerialDevice meadow, ProgressMonitor monitor, CancellationTokenSource cts)
         {
-            if (cts.IsCancellationRequested) return true;
+            if (cts.IsCancellationRequested) { return true; }
 
             await monitor.Log.WriteLineAsync("Initializing Meadow");
 
@@ -120,8 +119,13 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 return false;
             }
 
-            meadow.Initialize(false);
-            MeadowDeviceManager.MonoDisable(meadow);
+            await Task.Run(() =>
+            {
+                meadow.Initialize(false);
+                MeadowDeviceManager.MonoDisable(meadow);
+            });
+
+            
             await Task.Delay(3000); //give device time to reboot
 
             if(meadow.Initialize() == false)
@@ -208,11 +212,11 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             (List<string> files, List<UInt32> crcs) meadowFiles, (List<string> files, List<UInt32> crcs) localFiles)
         {
             if (cts.IsCancellationRequested)
-                return;
+            { return; }
 
             for(int i = 0; i < localFiles.files.Count; i++)
             {
-                if (meadowFiles.crcs.Contains(localFiles.crcs[i])) continue;
+                if (meadowFiles.crcs.Contains(localFiles.crcs[i])) { continue; }
 
                 await WriteFileToMeadow(meadow, monitor, cts,
                     folder, localFiles.files[i], true);
