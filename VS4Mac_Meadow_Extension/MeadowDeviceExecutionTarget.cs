@@ -19,7 +19,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 }
                 else
                 {
-                    return "Meadow F7";
+                    return MeadowDevice?.PortName;
                 }
             }
         }

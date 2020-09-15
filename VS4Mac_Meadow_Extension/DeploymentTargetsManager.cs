@@ -101,6 +101,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                     Debug.WriteLine($"Found Meadow at {port}");
 
                     ports.Add(port);
+                    foundMeadow = false;
                 }
             }
             return ports;
