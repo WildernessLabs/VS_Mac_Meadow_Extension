@@ -84,9 +84,9 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                     throw new Exception("Failed to initialize Meadow");
                 }
 
-                var meadowFiles = await GetFilesOnDevice(meadow, monitor, cts);
-
                 var localFiles = await GetLocalFiles(monitor, cts, folder);
+
+                var meadowFiles = await GetFilesOnDevice(meadow, monitor, cts);
 
                 await DeleteUnusedFiles(meadow, monitor, cts, meadowFiles, localFiles);
 
@@ -96,7 +96,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             }
             catch (Exception ex)
             {
-                await monitor.ErrorLog.WriteLineAsync($"Error: {ex.Message}");
+                 await monitor.ErrorLog.WriteLineAsync($"Error: {ex.Message}");
             }
             finally
             {
@@ -153,20 +153,27 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             return meadowFiles;
         }
 
-        async Task<(List<string> files, List<UInt32> crcs)>     GetLocalFiles(ProgressMonitor monitor, CancellationTokenSource cts, string folder)
+        async Task<(List<string> files, List<UInt32> crcs)> GetLocalFiles(ProgressMonitor monitor, CancellationTokenSource cts, string folder)
         {
             //get list of files in folder
             var paths = Directory.EnumerateFiles(folder, "*.*", SearchOption.TopDirectoryOnly)
             .Where(s => s.EndsWith(".exe") ||
-                        s.EndsWith(".dll") ||
+                        //s.EndsWith(".dll") ||
                         s.EndsWith(".bmp") ||
                         s.EndsWith(".jpg") ||
                         s.EndsWith(".jpeg") ||
-                        s.EndsWith(".txt"));
+                        s.EndsWith(".txt") ||
+                        s.EndsWith(".json") ||
+                        s.EndsWith(".xml") ||
+                        s.EndsWith(".yml") ||
+                        s.EndsWith("Meadow.Foundation.dll"));
+
+            var dependences = AssemblyManager.GetDependencies("App.exe" ,folder);
 
             var files = new List<string>();
             var crcs = new List<UInt32>();
 
+            //crawl other files (we can optimize)
             foreach (var file in paths)
             {
                 if (cts.IsCancellationRequested) break;
@@ -177,7 +184,28 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                     var bytes = new byte[len];
 
                     fs.Read(bytes, 0, len);
-                    
+
+                    //0x
+                    var crc = CrcTools.Crc32part(bytes, len, 0);// 0x04C11DB7);
+
+                    Console.WriteLine($"{file} crc is {crc}");
+                    files.Add(Path.GetFileName(file));
+                    crcs.Add(crc);
+                }
+            }
+
+            //crawl dependences
+            foreach (var file in dependences)
+            {
+                if (cts.IsCancellationRequested) { break; }
+
+                using (FileStream fs = File.Open(Path.Combine(folder, file), FileMode.Open))
+                {
+                    var len = (int)fs.Length;
+                    var bytes = new byte[len];
+
+                    fs.Read(bytes, 0, len);
+
                     //0x
                     var crc = CrcTools.Crc32part(bytes, len, 0);// 0x04C11DB7);
 
