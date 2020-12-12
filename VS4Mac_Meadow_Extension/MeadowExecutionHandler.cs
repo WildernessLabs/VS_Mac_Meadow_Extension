@@ -66,14 +66,19 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         //https://stackoverflow.com/questions/29798243/how-to-write-to-the-tool-output-pad-from-within-a-monodevelop-add-in
         async Task DeployApp(MeadowDeviceExecutionTarget target, string folder, CancellationTokenSource cts)
         {
-            DeploymentTargetsManager.StopPollingForDevices();
+            AggregatedProgressMonitor monitor = null;
 
-            ProgressMonitor toolMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetToolOutputProgressMonitor(true, cts);
-            ProgressMonitor outMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetStatusProgressMonitor("Meadow", IconId.Null, true);
+            await Task.Run(() =>
+            {
+                DeploymentTargetsManager.StopPollingForDevices();
 
-            var monitor = new AggregatedProgressMonitor(toolMonitor, new ProgressMonitor[] { outMonitor });
+                ProgressMonitor toolMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetToolOutputProgressMonitor(true, cts);
+                ProgressMonitor outMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetStatusProgressMonitor("Meadow", IconId.Null, true);
 
-            monitor.BeginTask("Deploying to Meadow ...", 1);
+                monitor = new AggregatedProgressMonitor(toolMonitor, new ProgressMonitor[] { outMonitor });
+            });
+
+            monitor?.BeginTask("Deploying to Meadow ...", 1);
 
             try
             {
@@ -82,7 +87,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 if(await InitializeMeadowDevice(meadow, monitor, cts) == false)
                 {
                     throw new Exception("Failed to initialize Meadow");
-                }
+                } 
 
                 var localFiles = await GetLocalFiles(monitor, cts, folder);
 
@@ -92,7 +97,9 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
                 await DeployApp(meadow, monitor, cts, folder, meadowFiles, localFiles);
 
-                await ResetMeadowAndStartMono(meadow, monitor, cts);
+                await MeadowDeviceManager.MonoEnable(meadow).ConfigureAwait(false);
+
+                monitor.ReportSuccess("Resetting Meadow and starting app");
             }
             catch (Exception ex)
             {
@@ -118,15 +125,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 monitor.ErrorLog.WriteLine("Can't read Meadow device");
                 return false;
             }
-
-            await Task.Run(() =>
-            {
-                meadow.Initialize(false);
-                MeadowDeviceManager.MonoDisable(meadow);
-            });
-
-            
-            await Task.Delay(3000); //give device time to reboot
 
             if(meadow.Initialize() == false)
             {
@@ -259,34 +257,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             {
                 await monitor.Log.WriteLineAsync($"Writing {file}").ConfigureAwait(false);
                 await meadow.WriteFile(file, folder).ConfigureAwait(false);
-            }
-        }
-
-        async Task ResetMeadowAndStartMono(MeadowSerialDevice meadow, ProgressMonitor monitor, CancellationTokenSource cts)
-        {
-            if(cts.IsCancellationRequested) { return; }
-
-            string serial = meadow.DeviceInfo.SerialNumber;
-
-            monitor.ReportSuccess("Resetting Meadow and starting app");
-
-            MeadowDeviceManager.MonoEnable(meadow);
-
-            try
-            {
-                MeadowDeviceManager.ResetMeadow(meadow, 0);
-            }
-            catch
-            {
-                //ignore for now
-            }
-
-            await Task.Delay(2500);//wait for reboot
-
-            //reconnect serial port
-            if(meadow.Initialize() == false)
-            {
-                //find device with matching serial //ToDo
             }
         }
     }

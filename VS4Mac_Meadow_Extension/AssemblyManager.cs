@@ -1,4 +1,6 @@
-﻿using System;
+﻿/*
+
+using System;
 using Mono.Collections.Generic;
 using System.IO;
 using Mono.Cecil;
@@ -65,3 +67,5 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         }
     }
 }
+
+*/
