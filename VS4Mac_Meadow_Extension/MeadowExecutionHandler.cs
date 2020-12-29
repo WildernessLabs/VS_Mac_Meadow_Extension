@@ -253,7 +253,13 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         {
             if (cts.IsCancellationRequested) { return; }
 
-            if (overwrite || await meadow.IsFileOnDevice(file).ConfigureAwait(false) == false)
+            if(File.Exists(Path.Combine(folder, file)) == null)
+            {
+                await monitor.Log.WriteLineAsync($"Warning: cannot find {file}").ConfigureAwait(false);
+                return;
+            }
+
+          //  if (overwrite || await meadow.IsFileOnDevice(file).ConfigureAwait(false) == false)
             {
                 await monitor.Log.WriteLineAsync($"Writing {file}").ConfigureAwait(false);
                 await meadow.WriteFile(file, folder).ConfigureAwait(false);
