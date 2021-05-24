@@ -18,4 +18,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="MeadowExecutionHandler copy.cs" />
+  </ItemGroup>
 </Project>

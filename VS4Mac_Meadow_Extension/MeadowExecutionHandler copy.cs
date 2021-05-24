@@ -9,7 +9,7 @@ using System;
 using MonoDevelop.Core.ProgressMonitoring;
 using MeadowCLI.Hcom;
 using System.IO;
-using MeadowCLI;
+using System.Reflection.Metadata;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -19,13 +19,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         private EventHandler<MeadowMessageEventArgs> messageEventHandler;
         private MeadowSerialDevice meadowExecutionTarget;
 
-        const string GUID_EXTENSION = ".guid";
-
-        string[] SYSTEM_FILES = { "App.exe", "System.Net.dll", "System.Net.Http.dll", "mscorlib.dll", "System.dll", "System.Core.dll", "Meadow.dll" };
-
         public bool CanExecute(ExecutionCommand command)
-        {   //returning false here swaps the play button with a build button
-
+        {   //returning false here swaps the play button with a build button 
             return (command is MeadowExecutionCommand);
         }
 
@@ -95,40 +90,34 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                     throw new Exception("Failed to initialize Meadow");
                 }
 
-                //Read text file from Meadow
-                //  await MeadowFileManager.GetInitialBytesFromFile(meadow, "Hello.txt");
-
-              //  var data = await meadow.GetInitialFileData("Hello.txt");
-
-
                 //run linker
                 ManualLink.LinkApp(folder);
 
-                await Task.Delay(50);//pause to release file handle
-
-                //var appFolder = folder;
-                var linkFolder = Path.Combine(folder, ManualLink.LinkFolder);
+               // var appFolder = folder;//
+                var appFolder = Path.Combine(folder, ManualLink.LinkFolder);
 
                 var assets = GetLocalAssets(monitor, cts, folder);
-                var appFiles = GetNonSystemFiles(GetLocalAppFiles(monitor, cts, linkFolder));
-                var systemFiles = GetSystemFiles(GetLocalAppFiles(monitor, cts, folder));
+            //    var appFiles = GetLocalAppFiles(monitor, cts, appFolder);
+                var appFiles = GetLocalAppFiles(monitor, cts, folder);
 
-                var meadowFiles = await GetFilesOnDevice(meadow, monitor, cts);
+                //Old   var meadowFiles = await GetFilesOnDevice(meadow, monitor, cts);
+                (List<string> files, List<uint> crcs) meadowFiles = (new List<string>(), new List<uint>());
 
                 var allFiles = new List<string>(assets.files.Count + appFiles.files.Count);
                 allFiles.AddRange(assets.files);
                 allFiles.AddRange(appFiles.files);
-                allFiles.AddRange(systemFiles.files);
 
-                await DeleteUnusedFiles(meadow, monitor, cts, meadowFiles, allFiles);
+                //Old   await DeleteUnusedFiles(meadow, monitor, cts, meadowFiles, allFiles);
+
+                //   await DeleteUnusedFiles(meadow, monitor, cts, meadowFiles, assets);
+                //   await DeleteUnusedFiles(meadow, monitor, cts, meadowFiles, appFiles);
 
                 //deploy app
-              //  await DeployFilesWithCrcCheck(meadow, monitor, cts, linkFolder, meadowFiles, appFiles);
-                await DeployFilesWithGuidCheck(meadow, monitor, cts, linkFolder, meadowFiles, appFiles);
-                await DeployFilesWithCrcCheck(meadow, monitor, cts, folder, meadowFiles, systemFiles);
+                await DeployFiles(meadow, monitor, cts, appFolder, meadowFiles, appFiles);
+
 
                 //deploy assets
-                await DeployFilesWithCrcCheck(meadow, monitor, cts, folder, meadowFiles, assets);
+             //   await DeployFiles(meadow, monitor, cts, folder, meadowFiles, assets);
 
                 await MeadowDeviceManager.MonoEnable(meadow).ConfigureAwait(false);
 
@@ -198,21 +187,36 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             var dependences = AssemblyManager.GetDependencies("App.exe", appFolder);
             dependences.Add("App.exe");
 
+            var weaver = new WeaverCRC();
+
             foreach (var file in dependences)
             {
                 if (cts.IsCancellationRequested) { break; }
 
-                using (FileStream fs = File.Open(Path.Combine(appFolder, file), FileMode.Open))
+                var fileName = Path.Combine(appFolder, file);
+
+                if(fileName.Contains("mscorlib.dll") == false &&
+                    fileName.Contains("System.dll") == false &&
+                    fileName.Contains("Meadow.dll") == false)
+                {
+                    Console.WriteLine($"{fileName} GUID: {weaver.GetCrcGuid(fileName)}");
+
+
+                }
+
+                using (FileStream fs = File.Open(fileName, FileMode.Open))
                 {
                     var len = (int)fs.Length;
                     var bytes = new byte[len];
 
                     fs.Read(bytes, 0, len);
 
+                    //grab the guid
+
                     //0x
                     var crc = CrcTools.Crc32part(bytes, len, 0);// 0x04C11DB7);
 
-                  //  Console.WriteLine($"{file} crc is {crc}");
+                    Console.WriteLine($"{file} crc is {crc}");
                     files.Add(Path.GetFileName(file));
                     crcs.Add(crc);
                 }
@@ -260,7 +264,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                     //0x
                     var crc = CrcTools.Crc32part(bytes, len, 0);// 0x04C11DB7);
 
-                   // Console.WriteLine($"{file} crc is {crc}");
+                    Console.WriteLine($"{file} crc is {crc}");
                     files.Add(Path.GetFileName(file));
                     crcs.Add(crc);
                 }
@@ -278,16 +282,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             foreach(var file in meadowFiles.files)
             {
                 if (cts.IsCancellationRequested) { break; }
-
-                //skip - we'll delete with the dll
-                if(file.Contains(GUID_EXTENSION))
-                {
-                    var lib = file.Substring(0, file.Length - GUID_EXTENSION.Length);
-                    if(localFiles.Contains(lib))
-                    {
-                        continue;
-                    }    
-                }
        
                 if(localFiles.Contains(file) == false)
                 {
@@ -298,95 +292,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             }
         }
 
-        (List<string> files, List<UInt32> crcs) GetSystemFiles((List<string> files, List<UInt32> crcs) files)
-        {
-            (List<string> files, List<UInt32> crcs) systemFiles = (new List<string>(), new List<UInt32>());
-
-            //clean this up later with a model object and linn
-            for (int i = 0; i < files.files.Count; i++)
-            {
-                if (SYSTEM_FILES.Contains(files.files[i]))
-                {
-                    systemFiles.files.Add(files.files[i]);
-                    systemFiles.crcs.Add(files.crcs[i]);
-                }
-            }
-
-            return systemFiles;
-        }
-
-        (List<string> files, List<UInt32> crcs) GetNonSystemFiles((List<string> files, List<UInt32> crcs) files)
-        {
-            (List<string> files, List<UInt32> crcs) otherFiles = (new List<string>(), new List<UInt32>());
-
-            //clean this up later with a model object and linn
-            for (int i = 0; i < files.files.Count; i++)
-            {
-                if (SYSTEM_FILES.Contains(files.files[i]) == false)
-                {
-                    otherFiles.files.Add(files.files[i]);
-                    otherFiles.crcs.Add(files.crcs[i]);
-                }
-            }
-
-            return otherFiles;
-        }
-
-        async Task DeployFilesWithGuidCheck(
-            MeadowSerialDevice meadow,
-            ProgressMonitor monitor,
-            CancellationTokenSource cts,
-            string folder,
-            (List<string> files, List<UInt32> crcs) meadowFiles,
-            (List<string> files, List<UInt32> crcs) localFiles)
-        {
-            if (cts.IsCancellationRequested)
-            { return; }
-
-            var weaver = new WeaverCRC();
-
-            for (int i = 0; i < localFiles.files.Count; i++)
-            {
-                var guidFileName = localFiles.files[i] + GUID_EXTENSION;
-                string guidOnMeadow = string.Empty;
-
-                if(meadowFiles.files.Contains(guidFileName))
-                {
-                    guidOnMeadow = await meadow.GetInitialFileData(guidFileName);
-                    await Task.Delay(100);
-                }
-
-                //calc guid 
-                var guidLocal = weaver.GetCrcGuid(Path.Combine(folder, localFiles.files[i])).ToString();
-
-                if(guidLocal == guidOnMeadow)
-                {
-                    continue;
-                }
-
-                Console.WriteLine($"Guids didn't match for {localFiles.files[i]}");
-                await MeadowFileManager.WriteFileToFlash(meadow, Path.Combine(folder, localFiles.files[i]), localFiles.files[i]);
-
-                await Task.Delay(250);
-
-                //need to write new Guid file
-                
-                var guidFilePath = Path.Combine(folder, guidFileName);
-                File.WriteAllText(guidFilePath, guidLocal);
-
-                await MeadowFileManager.WriteFileToFlash(meadow, guidFilePath, guidFileName);
-
-                await Task.Delay(250);
-            }
-        }
-            
-        async Task DeployFilesWithCrcCheck(
-            MeadowSerialDevice meadow,
-            ProgressMonitor monitor,
-            CancellationTokenSource cts,
-            string folder,
-            (List<string> files, List<UInt32> crcs) meadowFiles,
-            (List<string> files, List<UInt32> crcs) localFiles)
+        async Task DeployFiles(MeadowSerialDevice meadow, ProgressMonitor monitor, CancellationTokenSource cts, string folder,
+            (List<string> files, List<UInt32> crcs) meadowFiles, (List<string> files, List<UInt32> crcs) localFiles)
         {
             if (cts.IsCancellationRequested)
             { return; }
@@ -395,14 +302,15 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             {
                 if (meadowFiles.crcs.Contains(localFiles.crcs[i]))
                 {
-                   // Console.WriteLine($"CRCs matched for {localFiles.files[i]}");
+                    Console.WriteLine($"CRCs matched for {localFiles.files[i]}");
                     continue;
                 }
                 
-               // Console.WriteLine($"CRCs didn't match for {localFiles.files[i]}, {localFiles.crcs[i]:X}");
+                Console.WriteLine($"CRCs didn't match for {localFiles.files[i]}, {localFiles.crcs[i]:X}");
                 await MeadowFileManager.WriteFileToFlash(meadow, Path.Combine(folder, localFiles.files[i]), localFiles.files[i]);
 
-                await Task.Delay(250);
+              //  await WriteFileToMeadow(meadow, monitor, cts,
+              //      folder, localFiles.files[i], true);
             }
         }
     }
