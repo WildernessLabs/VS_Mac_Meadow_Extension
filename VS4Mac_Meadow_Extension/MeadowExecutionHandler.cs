@@ -107,24 +107,24 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 await Task.Delay(50);//pause to release file handle
 
                 //var appFolder = folder;
-                var linkFolder = Path.Combine(folder, ManualLink.LinkFolder);
+             //   var linkFolder = Path.Combine(folder, ManualLink.LinkFolder);
 
                 var assets = GetLocalAssets(monitor, cts, folder);
-                var appFiles = GetNonSystemFiles(GetLocalAppFiles(monitor, cts, linkFolder));
-                var systemFiles = GetSystemFiles(GetLocalAppFiles(monitor, cts, folder));
+             //   var appFiles = GetNonSystemFiles(GetLocalAppFiles(monitor, cts, linkFolder));
+                var systemFiles = GetLocalAppFiles(monitor, cts, folder);
 
                 var meadowFiles = await GetFilesOnDevice(meadow, monitor, cts);
 
-                var allFiles = new List<string>(assets.files.Count + appFiles.files.Count);
+                var allFiles = new List<string>(); // assets.files.Count + appFiles.files.Count);
                 allFiles.AddRange(assets.files);
-                allFiles.AddRange(appFiles.files);
+            //    allFiles.AddRange(appFiles.files);
                 allFiles.AddRange(systemFiles.files);
 
                 await DeleteUnusedFiles(meadow, monitor, cts, meadowFiles, allFiles);
 
                 //deploy app
               //  await DeployFilesWithCrcCheck(meadow, monitor, cts, linkFolder, meadowFiles, appFiles);
-                await DeployFilesWithGuidCheck(meadow, monitor, cts, linkFolder, meadowFiles, appFiles);
+              //  await DeployFilesWithGuidCheck(meadow, monitor, cts, linkFolder, meadowFiles, appFiles);
                 await DeployFilesWithCrcCheck(meadow, monitor, cts, folder, meadowFiles, systemFiles);
 
                 //deploy assets
