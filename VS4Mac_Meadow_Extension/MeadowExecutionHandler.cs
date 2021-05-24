@@ -95,37 +95,29 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                     throw new Exception("Failed to initialize Meadow");
                 }
 
-                //Read text file from Meadow
-                //  await MeadowFileManager.GetInitialBytesFromFile(meadow, "Hello.txt");
-
-              //  var data = await meadow.GetInitialFileData("Hello.txt");
-
-
                 //run linker
-                ManualLink.LinkApp(folder);
+                //ManualLink.LinkApp(folder);
+                //await Task.Delay(50);//pause to release file handle
 
-                await Task.Delay(50);//pause to release file handle
-
-                //var appFolder = folder;
-             //   var linkFolder = Path.Combine(folder, ManualLink.LinkFolder);
+                var linkFolder = Path.Combine(folder, ManualLink.LinkFolder);
 
                 var assets = GetLocalAssets(monitor, cts, folder);
-             //   var appFiles = GetNonSystemFiles(GetLocalAppFiles(monitor, cts, linkFolder));
-                var systemFiles = GetLocalAppFiles(monitor, cts, folder);
+                //var linkedFiles = GetNonSystemFiles(GetLocalAppFiles(monitor, cts, linkFolder));
+                var unlinkedFiles = GetLocalAppFiles(monitor, cts, folder); //GetSystemFiles to isolate
 
                 var meadowFiles = await GetFilesOnDevice(meadow, monitor, cts);
 
-                var allFiles = new List<string>(); // assets.files.Count + appFiles.files.Count);
+                var allFiles = new List<string>();
                 allFiles.AddRange(assets.files);
             //    allFiles.AddRange(appFiles.files);
-                allFiles.AddRange(systemFiles.files);
+                allFiles.AddRange(unlinkedFiles.files);
 
                 await DeleteUnusedFiles(meadow, monitor, cts, meadowFiles, allFiles);
 
                 //deploy app
               //  await DeployFilesWithCrcCheck(meadow, monitor, cts, linkFolder, meadowFiles, appFiles);
               //  await DeployFilesWithGuidCheck(meadow, monitor, cts, linkFolder, meadowFiles, appFiles);
-                await DeployFilesWithCrcCheck(meadow, monitor, cts, folder, meadowFiles, systemFiles);
+                await DeployFilesWithCrcCheck(meadow, monitor, cts, folder, meadowFiles, unlinkedFiles);
 
                 //deploy assets
                 await DeployFilesWithCrcCheck(meadow, monitor, cts, folder, meadowFiles, assets);
@@ -285,7 +277,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                     var lib = file.Substring(0, file.Length - GUID_EXTENSION.Length);
                     if(localFiles.Contains(lib))
                     {
-                        continue;
+                    //    continue;
                     }    
                 }
        
