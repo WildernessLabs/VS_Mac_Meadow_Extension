@@ -80,16 +80,13 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             bool foundMeadow = false;
             for (int i = 0; i < lines.Length; i++)
             {
-                //first level devices 
-                if (lines[i].IndexOf("+-o") == 0)
+                if (lines[i].Contains("Meadow F7 Micro"))
                 {
-                    //we reset here so we don't read a serial port name for a non-Meadow device
+                    foundMeadow = true;
+                }
+                else if (lines[i].IndexOf("+-o") == 0)
+                {
                     foundMeadow = false;
-                    if (lines[i].Contains("Meadow"))
-                    {
-                        //found a meadow device
-                        foundMeadow = true;
-                    }
                 }
 
                 //now find the IODialinDevice entry which contains the serial port name

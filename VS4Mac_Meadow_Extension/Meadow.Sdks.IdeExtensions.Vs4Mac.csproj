@@ -14,7 +14,13 @@
     <ProjectReference Include="..\..\Meadow.CLI\Meadow.CLI.Core\Meadow.CLI.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="WildernessLabs.Meadow.Template.0.5.1.nupkg">
+    <Compile Remove="MeadowExecutionHandler copy.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="WildernessLabs.Meadow.Template.0.6.0.nupkg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="WildernessLabs.Meadow.Template.0.6.1.nupkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

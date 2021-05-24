@@ -4,7 +4,7 @@ using Mono.Addins.Description;
 [assembly: Addin(
     "Meadow",
     Namespace = "WildernessLabs.Sdks",
-    Version = "0.7.6"
+    Version = "0.7.11.0"
 )]
 
 [assembly: AddinName("Meadow")]
