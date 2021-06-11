@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MeadowCLI.DeviceManagement;
+using Meadow.CLI.Core.DeviceManagement;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -115,10 +115,11 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 if (ct.IsCancellationRequested)
                 { break; }
 
-                if (Targets.Any(t => t.MeadowDevice?.PortName == port))
+                if (Targets.Any(t => t.MeadowDevice?.SerialPort?.PortName == port))
                 { continue; }
 
-                var meadow = new MeadowSerialDevice(port, false);
+                var logger = new OutputLogger();
+                var meadow = new MeadowSerialDevice(port, logger);
 
                 Targets?.Add(new MeadowDeviceExecutionTarget(meadow));
                 DeviceListChanged?.Invoke(null);
@@ -127,7 +128,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             var removeList = new List<MeadowDeviceExecutionTarget>();
             foreach (var t in Targets)
             {
-                if (serialPorts.Any(p => p == t?.MeadowDevice?.PortName) == false)
+                if (serialPorts.Any(p => p == t?.MeadowDevice?.SerialPort?.PortName) == false)
                 {
                     removeList.Add(t);
                 }

@@ -1,4 +1,4 @@
-﻿using MeadowCLI.DeviceManagement;
+﻿using Meadow.CLI.Core.DeviceManagement;
 using MonoDevelop.Core.Execution;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
@@ -19,12 +19,12 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 }
                 else
                 {
-                    return MeadowDevice?.PortName;
+                    return MeadowDevice?.SerialPort?.PortName;
                 }
             }
         }
 
-        public override string Name => "Meadow " + MeadowDevice?.PortName;
+        public override string Name => "Meadow " + MeadowDevice?.SerialPort?.PortName;
 
         //public override string Name => "Meadow " + MeadowDevice?.DeviceInfo.SerialNumber.Substring("Serial Number: ".Length);
 

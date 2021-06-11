@@ -1,5 +1,4 @@
 ﻿using MonoDevelop.Core.Execution;
-using MeadowCLI.DeviceManagement;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Linq;
@@ -7,19 +6,17 @@ using MonoDevelop.Core;
 using System.Collections.Generic;
 using System;
 using MonoDevelop.Core.ProgressMonitoring;
-using MeadowCLI.Hcom;
 using System.IO;
-using MeadowCLI;
+using Meadow.CLI.Core.DeviceManagement;
+using Meadow.CLI.Core.Internals.Tools;
+using Meadow.CLI.Core.DeviceManagement.Tools;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
     class MeadowExecutionHandler : IExecutionHandler
     {
-        private ProgressMonitor outputMonitor;
-        private EventHandler<MeadowMessageEventArgs> messageEventHandler;
-        private MeadowSerialDevice meadowExecutionTarget;
-
         const string GUID_EXTENSION = ".guid";
+        AggregatedProgressMonitor monitor;
 
         string[] SYSTEM_FILES = { "App.exe", "System.Net.dll", "System.Net.Http.dll", "mscorlib.dll", "System.dll", "System.Core.dll", "Meadow.dll" };
 
@@ -31,37 +28,15 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         public MeadowExecutionHandler()
         {
-            messageEventHandler = OnMeadowMessage;
         }
 
         object _lock = new object();
 
-        private void OnMeadowMessage(object sender, MeadowMessageEventArgs args)
-        {
-            lock (_lock)
-            {
-                if (outputMonitor == null)
-                {
-                    outputMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetOutputProgressMonitor("Meadow", IconId.Null, true, true, true);
-                }
-                outputMonitor.Log.WriteLine(args.Message);
-            }
-        }
+
 
         public ProcessAsyncOperation Execute(ExecutionCommand command, OperationConsole console)
         {
             var cmd = command as MeadowExecutionCommand;
-
-            //unsubscribe from previous device if it exists
-            if(meadowExecutionTarget != null && messageEventHandler != null)
-            {
-                meadowExecutionTarget.OnMeadowMessage -= messageEventHandler;
-            }
-
-            //get a ref to the new execution target
-            meadowExecutionTarget = (cmd.Target as MeadowDeviceExecutionTarget).MeadowDevice;
-
-            meadowExecutionTarget.OnMeadowMessage += messageEventHandler;
 
             var cts = new CancellationTokenSource();
             var deployTask = DeployApp(cmd.Target as MeadowDeviceExecutionTarget, cmd.OutputDirectory, cts);
@@ -72,16 +47,17 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         //https://stackoverflow.com/questions/29798243/how-to-write-to-the-tool-output-pad-from-within-a-monodevelop-add-in
         async Task DeployApp(MeadowDeviceExecutionTarget target, string folder, CancellationTokenSource cts)
         {
-            AggregatedProgressMonitor monitor = null;
-
             await Task.Run(() =>
             {
                 DeploymentTargetsManager.StopPollingForDevices();
 
-                ProgressMonitor toolMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetToolOutputProgressMonitor(true, cts);
-                ProgressMonitor outMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetStatusProgressMonitor("Meadow", IconId.Null, true);
+                if(monitor == null)
+                {
+                    ProgressMonitor toolMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetToolOutputProgressMonitor(true, cts);
+                    ProgressMonitor outMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetStatusProgressMonitor("Meadow", IconId.Null, true);
 
-                monitor = new AggregatedProgressMonitor(toolMonitor, new ProgressMonitor[] { outMonitor });
+                    monitor = new AggregatedProgressMonitor(toolMonitor, new ProgressMonitor[] { outMonitor });
+                }
             });
 
             monitor?.BeginTask("Deploying to Meadow ...", 1);
@@ -105,24 +81,24 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 //var linkedFiles = GetNonSystemFiles(GetLocalAppFiles(monitor, cts, linkFolder));
                 var unlinkedFiles = GetLocalAppFiles(monitor, cts, folder); //GetSystemFiles to isolate
 
+                await meadow.MonoDisableAsync(cts.Token);
+
                 var meadowFiles = await GetFilesOnDevice(meadow, monitor, cts);
 
-                var allFiles = new List<string>();
-                allFiles.AddRange(assets.files);
-            //    allFiles.AddRange(appFiles.files);
-                allFiles.AddRange(unlinkedFiles.files);
+
+                var allFiles = new Dictionary<string, uint>();
+
+                assets.ToList().ForEach(x => allFiles.Add(x.Key, x.Value));
+                unlinkedFiles.ToList().ForEach(x => allFiles.Add(x.Key, x.Value));
 
                 await DeleteUnusedFiles(meadow, monitor, cts, meadowFiles, allFiles);
 
                 //deploy app
               //  await DeployFilesWithCrcCheck(meadow, monitor, cts, linkFolder, meadowFiles, appFiles);
               //  await DeployFilesWithGuidCheck(meadow, monitor, cts, linkFolder, meadowFiles, appFiles);
-                await DeployFilesWithCrcCheck(meadow, monitor, cts, folder, meadowFiles, unlinkedFiles);
+                await DeployFilesWithCrcCheck(meadow, monitor, cts, folder, meadowFiles, allFiles);
 
-                //deploy assets
-                await DeployFilesWithCrcCheck(meadow, monitor, cts, folder, meadowFiles, assets);
-
-                await MeadowDeviceManager.MonoEnable(meadow).ConfigureAwait(false);
+                await meadow.MonoEnableAsync(cts.Token);
 
                 monitor.ReportSuccess("Resetting Meadow and starting app");
             }
@@ -135,7 +111,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 monitor?.EndTask();
                 monitor?.Dispose();
 
-                DeploymentTargetsManager.StartPollingForDevices();
+                //fire and forget
+                var t = DeploymentTargetsManager.StartPollingForDevices();
             }
         }
 
@@ -151,7 +128,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 return false;
             }
 
-            if(meadow.Initialize() == false)
+            if(await meadow.InitializeAsync() == false)
             {
                 monitor.ErrorLog.WriteLine("Couldn't initialize serial port");
                 return false;
@@ -159,15 +136,15 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             return true;
         }
 
-        async Task<(List<string> files, List<UInt32> crcs)> GetFilesOnDevice(MeadowSerialDevice meadow, ProgressMonitor monitor, CancellationTokenSource cts)
+        async Task<IDictionary<string, uint>> GetFilesOnDevice(MeadowSerialDevice meadow, ProgressMonitor monitor, CancellationTokenSource cts)
         {
-            if (cts.IsCancellationRequested) { return (new List<string>(), new List<UInt32>()); }
+            if (cts.IsCancellationRequested) { return new Dictionary<string, uint>(); }
 
             await monitor.Log.WriteLineAsync("Checking files on device (may take several seconds)");
 
-            var meadowFiles = await meadow.GetFilesAndCrcs(30000);
+            var meadowFiles = await meadow.GetFilesAndCrcsAsync(30000);
 
-            foreach (var f in meadowFiles.files)
+            foreach (var f in meadowFiles)
             {
                 if (cts.IsCancellationRequested) break;
                 await monitor.Log.WriteLineAsync($"Found {f}").ConfigureAwait(false);
@@ -176,19 +153,35 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             return meadowFiles;
         }
 
-        (List<string> files, List<UInt32> crcs) GetLocalAppFiles(
+        void RenameAppLib(string appFolder)
+        {
+            string dllName = Path.Combine(appFolder, "App.dll");
+            string exeName = Path.Combine(appFolder, "App.exe");
+            if (File.Exists(dllName))
+            {
+                if (File.Exists(exeName))
+                    File.Delete(exeName);
+
+                File.Copy(dllName, exeName);
+                File.Delete(dllName);
+            }
+        }
+
+        IDictionary<string, uint> GetLocalAppFiles(
             ProgressMonitor monitor,
             CancellationTokenSource cts,
             string appFolder)
         {
-            var files = new List<string>();
-            var crcs = new List<UInt32>();
+            var files = new Dictionary<string, uint>();
 
             //crawl dependences
             //var paths = Directory.EnumerateFiles(appFolder, "*.*", SearchOption.TopDirectoryOnly);
 
-            var dependences = AssemblyManager.GetDependencies("App.exe", appFolder);
-            dependences.Add("App.exe");
+            List<string> dependences;
+         //   RenameAppLib(appFolder);
+        
+            dependences = AssemblyManager.GetDependencies("App.dll", appFolder);
+            dependences.Add("App.dll");
 
             foreach (var file in dependences)
             {
@@ -205,15 +198,14 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                     var crc = CrcTools.Crc32part(bytes, len, 0);// 0x04C11DB7);
 
                   //  Console.WriteLine($"{file} crc is {crc}");
-                    files.Add(Path.GetFileName(file));
-                    crcs.Add(crc);
+                    files.Add(Path.GetFileName(file), crc);
                 }
             }
 
-            return (files, crcs);
+            return files;
         }
 
-        (List<string> files, List<UInt32> crcs) GetLocalAssets(
+        IDictionary<string, uint> GetLocalAssets(
             ProgressMonitor monitor,
             CancellationTokenSource cts,
             string assetsFolder)
@@ -232,10 +224,9 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                         //s.EndsWith("Meadow.Foundation.dll")
                         );
 
-         //   var dependences = AssemblyManager.GetDependencies("App.exe" ,folder);
+            //   var dependences = AssemblyManager.GetDependencies("App.exe" ,folder);
 
-            var files = new List<string>();
-            var crcs = new List<UInt32>();
+            var files = new Dictionary<string, uint>();
 
             //crawl other files (we can optimize)
             foreach (var file in paths)
@@ -252,40 +243,40 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                     //0x
                     var crc = CrcTools.Crc32part(bytes, len, 0);// 0x04C11DB7);
 
-                   // Console.WriteLine($"{file} crc is {crc}");
-                    files.Add(Path.GetFileName(file));
-                    crcs.Add(crc);
+                    files.Add(Path.GetFileName(file), crc);
                 }
             }
 
-            return (files, crcs);
+            return files;
         }
 
-        async Task DeleteUnusedFiles (MeadowSerialDevice meadow, ProgressMonitor monitor, CancellationTokenSource cts,
-            (List<string> files, List<UInt32> crcs) meadowFiles, List<string> localFiles)
+        async Task DeleteUnusedFiles (
+            MeadowSerialDevice meadow,
+            ProgressMonitor monitor,
+            CancellationTokenSource cts,
+            IDictionary<string, uint> meadowFiles,
+            IDictionary<string, uint> localFiles)
         {
-            if (cts.IsCancellationRequested)
-                return;
-
-            foreach(var file in meadowFiles.files)
+            foreach(var file in meadowFiles)
             {
                 if (cts.IsCancellationRequested) { break; }
 
                 //skip - we'll delete with the dll
-                if(file.Contains(GUID_EXTENSION))
+                /*
+                if(file.Key.Contains(GUID_EXTENSION))
                 {
-                    var lib = file.Substring(0, file.Length - GUID_EXTENSION.Length);
-                    if(localFiles.Contains(lib))
+                    var lib = file.Key.Substring(0, file.Key.Length - GUID_EXTENSION.Length);
+                    if(localFiles.Keys.Contains(lib))
                     {
                     //    continue;
                     }    
-                }
+                }*/
        
                 if(localFiles.Contains(file) == false)
                 {
-                    await MeadowFileManager.DeleteFile(meadow, file);
+                    await meadow.DeleteFileAsync(file.Key);
 
-                    await monitor.Log.WriteLineAsync($"Removing {file}").ConfigureAwait(false);
+                    await monitor.Log.WriteLineAsync($"Deleted {file} from Meadow").ConfigureAwait(false);
                 }
             }
         }
@@ -344,7 +335,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
                 if(meadowFiles.files.Contains(guidFileName))
                 {
-                    guidOnMeadow = await meadow.GetInitialFileData(guidFileName);
+                    //ToDo
+                   // guidOnMeadow = await meadow.GetInitialFileData(guidFileName);
                     await Task.Delay(100);
                 }
 
@@ -357,7 +349,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 }
 
                 Console.WriteLine($"Guids didn't match for {localFiles.files[i]}");
-                await MeadowFileManager.WriteFileToFlash(meadow, Path.Combine(folder, localFiles.files[i]), localFiles.files[i]);
+                await meadow.WriteFileAsync(Path.Combine(folder, localFiles.files[i]), localFiles.files[i]);
 
                 await Task.Delay(250);
 
@@ -366,7 +358,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 var guidFilePath = Path.Combine(folder, guidFileName);
                 File.WriteAllText(guidFilePath, guidLocal);
 
-                await MeadowFileManager.WriteFileToFlash(meadow, guidFilePath, guidFileName);
+                await meadow.WriteFileAsync(guidFilePath, guidFileName);
 
                 await Task.Delay(250);
             }
@@ -377,24 +369,31 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             ProgressMonitor monitor,
             CancellationTokenSource cts,
             string folder,
-            (List<string> files, List<UInt32> crcs) meadowFiles,
-            (List<string> files, List<UInt32> crcs) localFiles)
+            IDictionary<string, uint> meadowFiles,
+            IDictionary<string, uint> localFiles)
         {
             if (cts.IsCancellationRequested)
             { return; }
 
-            for(int i = 0; i < localFiles.files.Count; i++)
+            foreach(var file in localFiles)
             {
-                if (meadowFiles.crcs.Contains(localFiles.crcs[i]))
+                if (meadowFiles.Values.Contains(file.Value))
                 {
                    // Console.WriteLine($"CRCs matched for {localFiles.files[i]}");
                     continue;
                 }
-                
-               // Console.WriteLine($"CRCs didn't match for {localFiles.files[i]}, {localFiles.crcs[i]:X}");
-                await MeadowFileManager.WriteFileToFlash(meadow, Path.Combine(folder, localFiles.files[i]), localFiles.files[i]);
 
-                await Task.Delay(250);
+                if(file.Key == "App.dll")
+                {
+                    await meadow.WriteFileAsync(Path.Combine(folder, file.Key), "App.exe");
+                }
+                else
+                {
+                    await meadow.WriteFileAsync(Path.Combine(folder, file.Key), file.Key);
+                }
+
+                await monitor.Log.WriteLineAsync($"Copied {file.Key} to Meadow");
+                await Task.Delay(100);
             }
         }
     }
