@@ -1,4 +1,4 @@
-﻿using Meadow.CLI.Core.DeviceManagement;
+﻿using Meadow.CLI.Core.Devices;
 using MonoDevelop.Core.Execution;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac

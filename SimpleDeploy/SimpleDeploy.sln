@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.810.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleDeploy", "SimpleDeploy.csproj", "{ADC018DB-3335-4E83-B090-2A3867E1A231}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.CLI.Core", "..\..\Meadow.CLI\Meadow.CLI.Core\Meadow.CLI.Core.csproj", "{F15CDDA0-C110-4E0D-8B26-9B6415EEA0F6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ADC018DB-3335-4E83-B090-2A3867E1A231}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ADC018DB-3335-4E83-B090-2A3867E1A231}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ADC018DB-3335-4E83-B090-2A3867E1A231}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ADC018DB-3335-4E83-B090-2A3867E1A231}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F15CDDA0-C110-4E0D-8B26-9B6415EEA0F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F15CDDA0-C110-4E0D-8B26-9B6415EEA0F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F15CDDA0-C110-4E0D-8B26-9B6415EEA0F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F15CDDA0-C110-4E0D-8B26-9B6415EEA0F6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8FC6EAF3-EEFC-4BBF-8ABB-CCCE7079A4C6}
+	EndGlobalSection
+EndGlobal
