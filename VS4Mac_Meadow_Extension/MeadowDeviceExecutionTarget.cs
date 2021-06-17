@@ -28,7 +28,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         //public override string Name => "Meadow " + MeadowDevice?.DeviceInfo.SerialNumber.Substring("Serial Number: ".Length);
 
-        public MeadowSerialDevice MeadowDevice { get; private set; }
+        public MeadowSerialDevice MeadowDevice { get; set; }
 
         public MeadowDeviceExecutionTarget(MeadowSerialDevice device)
         {

@@ -42,7 +42,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             return new ProcessAsyncOperation(deployTask, cts);
         }
 
-        IMeadowDevice meadow;
+      //  IMeadowDevice meadow;
 
         //https://stackoverflow.com/questions/29798243/how-to-write-to-the-tool-output-pad-from-within-a-monodevelop-add-in
         async Task DeployApp(MeadowDeviceExecutionTarget target, string folder, CancellationTokenSource cts)
@@ -69,12 +69,23 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
                 await meadowDH.MonoDisableAsync(cts.Token);
 
-                await meadowDH.DeployAppAsync(Path.Combine(folder, "App.dll"),
-                    true, cts.Token);
+                var fileNameDll = Path.Combine(folder, "App.dll");
+                var fileNameExe = Path.Combine(folder, "App.exe");
+
+                if (File.Exists(fileNameDll))
+                {
+                    if (File.Exists(fileNameExe))
+                    {
+                        File.Delete(fileNameExe);
+                    }
+                    File.Copy(fileNameDll, fileNameExe);
+                }
+
+                await meadowDH.DeployAppAsync(fileNameExe, true, cts.Token);
 
                 await meadowDH.MonoEnableAsync(cts.Token);
 
-                meadow = meadowDH.MeadowDevice; //reference to keep alive
+                target.MeadowDevice = (MeadowSerialDevice)meadowDH.MeadowDevice; //reference to keep alive
 
             }
             catch (Exception ex)
