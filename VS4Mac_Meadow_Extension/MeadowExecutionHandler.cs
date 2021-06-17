@@ -17,7 +17,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
     class MeadowExecutionHandler : IExecutionHandler
     {
         const string GUID_EXTENSION = ".guid";
-        AggregatedProgressMonitor monitor;
+        OutputProgressMonitor monitor;
+        OutputLogger logger;
 
         string[] SYSTEM_FILES = { "App.exe", "System.Net.dll", "System.Net.Http.dll", "mscorlib.dll", "System.dll", "System.Core.dll", "Meadow.dll" };
 
@@ -29,6 +30,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         public MeadowExecutionHandler()
         {
+           
+            logger = new OutputLogger();
         }
 
 
@@ -42,32 +45,22 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             return new ProcessAsyncOperation(deployTask, cts);
         }
 
-      //  IMeadowDevice meadow;
+        MeadowDeviceHelper meadow;
 
         //https://stackoverflow.com/questions/29798243/how-to-write-to-the-tool-output-pad-from-within-a-monodevelop-add-in
         async Task DeployApp(MeadowDeviceExecutionTarget target, string folder, CancellationTokenSource cts)
         {
-            await Task.Run(() =>
-            {
-                DeploymentTargetsManager.StopPollingForDevices();
+            DeploymentTargetsManager.StopPollingForDevices();
 
-              //  if(monitor == null)
-                {
-             //       ProgressMonitor toolMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetToolOutputProgressMonitor(true, cts);
-                    ProgressMonitor outMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetStatusProgressMonitor("Meadow", IconId.Null, true);
-
-                    new AggregatedProgressMonitor(outMonitor);
-                   // monitor = new AggregatedProgressMonitor(toolMonitor, new ProgressMonitor[] { outMonitor });
-                }
-            });
-
-            monitor?.BeginTask("Deploying to Meadow ...", 1);
+            meadow?.Dispose();
 
             try
             {
-                var meadowDH = new MeadowDeviceHelper(target.MeadowDevice, target.MeadowDevice.Logger);
+                var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Id, logger: logger);
 
-                await meadowDH.MonoDisableAsync(cts.Token);
+                meadow = new MeadowDeviceHelper(device, device.Logger);
+
+                await meadow.MonoDisableAsync(cts.Token);
 
                 var fileNameDll = Path.Combine(folder, "App.dll");
                 var fileNameExe = Path.Combine(folder, "App.exe");
@@ -81,24 +74,21 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                     File.Copy(fileNameDll, fileNameExe);
                 }
 
-                await meadowDH.DeployAppAsync(fileNameExe, true, cts.Token);
+                await meadow.DeployAppAsync(fileNameExe, true, cts.Token);
 
-                await meadowDH.MonoEnableAsync(cts.Token);
-
-                target.MeadowDevice = (MeadowSerialDevice)meadowDH.MeadowDevice; //reference to keep alive
-
+                await meadow.MonoEnableAsync(cts.Token);
             }
             catch (Exception ex)
             {
-                await monitor.ErrorLog.WriteLineAsync($"Error: {ex.Message}");
+                await monitor?.ErrorLog.WriteLineAsync($"Error: {ex.Message}");
             }
             finally
             {
-                monitor?.EndTask();
-                monitor?.Dispose();
+                //monitor?.EndTask();
+                //monitor?.Dispose();
 
                 //fire and forget
-                var t = DeploymentTargetsManager.StartPollingForDevices();
+                _ = DeploymentTargetsManager.StartPollingForDevices();
             }
 
             return;

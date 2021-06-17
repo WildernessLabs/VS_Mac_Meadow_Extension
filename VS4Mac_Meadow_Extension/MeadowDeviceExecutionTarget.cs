@@ -1,5 +1,4 @@
-﻿using Meadow.CLI.Core.Devices;
-using MonoDevelop.Core.Execution;
+﻿using MonoDevelop.Core.Execution;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -9,30 +8,15 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
     /// </summary>
     public class MeadowDeviceExecutionTarget : ExecutionTarget
     {
-        public override string Id
+        public override string Id => Port;
+
+        public override string Name => $"Meadow {Port}";
+
+        public string Port { get; private set; }
+
+        public MeadowDeviceExecutionTarget(string port)
         {
-            get
-            {
-                if(MeadowDevice?.DeviceInfo?.SerialNumber != null)
-                {
-                    return MeadowDevice?.DeviceInfo?.SerialNumber;
-                }
-                else
-                {
-                    return MeadowDevice?.SerialPort?.PortName;
-                }
-            }
-        }
-
-        public override string Name => "Meadow " + MeadowDevice?.SerialPort?.PortName;
-
-        //public override string Name => "Meadow " + MeadowDevice?.DeviceInfo.SerialNumber.Substring("Serial Number: ".Length);
-
-        public MeadowSerialDevice MeadowDevice { get; set; }
-
-        public MeadowDeviceExecutionTarget(MeadowSerialDevice device)
-        {
-            MeadowDevice = device;
+            Port = port;
         }
     }
 }

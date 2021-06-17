@@ -4,8 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Meadow.CLI.Core.DeviceManagement;
-using Meadow.CLI.Core.Devices;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -17,7 +15,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         /// <summary>
         /// A collection of connected and ready Meadow devices
         /// </summary>
-        public static List<MeadowDeviceExecutionTarget> Targets { get; } = new List<MeadowDeviceExecutionTarget>();
+        public static List<MeadowDeviceExecutionTarget> Targets { get; private set; } = new List<MeadowDeviceExecutionTarget>();
 
         private static bool isPolling;
         private static CancellationTokenSource cts;
@@ -37,7 +35,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             while (cts.IsCancellationRequested == false)
             {
                 await Task.Run(()=> UpdateTargetsList(GetMeadowSerialPorts(), cts.Token));
-                await Task.Delay(3000);
+                await Task.Delay(5000);
             }
 
             isPolling = false;
@@ -105,7 +103,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             return ports;
         }
 
-        private static async Task UpdateTargetsList(List<string> serialPorts, CancellationToken ct)
+        private static void UpdateTargetsList(List<string> serialPorts, CancellationToken ct)
         {
             Debug.WriteLine("Update targets list");
             //var serialPorts = MeadowDeviceManager.FindSerialDevices();
@@ -116,20 +114,17 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 if (ct.IsCancellationRequested)
                 { break; }
 
-                if (Targets.Any(t => t.MeadowDevice?.SerialPort?.PortName == port))
+                if (Targets.Any(t => t.Id == port))
                 { continue; }
 
-                var logger = new OutputLogger();
-                var meadow = await MeadowDeviceManager.GetMeadowForSerialPort(port, logger: logger).ConfigureAwait(false);
-
-                Targets?.Add(new MeadowDeviceExecutionTarget((MeadowSerialDevice)meadow));
+                Targets?.Add(new MeadowDeviceExecutionTarget(port));
                 DeviceListChanged?.Invoke(null);
             }
 
             var removeList = new List<MeadowDeviceExecutionTarget>();
             foreach (var t in Targets)
             {
-                if (serialPorts.Any(p => p == t?.MeadowDevice?.SerialPort?.PortName) == false)
+                if (serialPorts.Any(p => p == t.Id) == false)
                 {
                     removeList.Add(t);
                 }
@@ -137,7 +132,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             foreach (var r in removeList)
             {
-                r?.MeadowDevice?.SerialPort?.Close();
                 Targets?.Remove(r);
                 DeviceListChanged?.Invoke(null);
             }
