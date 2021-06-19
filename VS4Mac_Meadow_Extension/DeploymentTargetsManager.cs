@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MeadowCLI.DeviceManagement;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -15,10 +15,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         /// <summary>
         /// A collection of connected and ready Meadow devices
         /// </summary>
-        public static List<MeadowDeviceExecutionTarget> Targets { get; } = new List<MeadowDeviceExecutionTarget>();
+        public static List<MeadowDeviceExecutionTarget> Targets { get; private set; } = new List<MeadowDeviceExecutionTarget>();
 
-        //    private static Timer devicePollTimer;
-        //    private static object eventLock = new object();
         private static bool isPolling;
         private static CancellationTokenSource cts;
 
@@ -26,24 +24,18 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         public static async Task StartPollingForDevices()
         {
-            if(isPolling == true)
-            {
-                return;
-            }
+            Debug.WriteLine("Start Polling for devices");
+
+            if(isPolling == true) { return; }
 
             isPolling = true;
 
             cts = new CancellationTokenSource();
 
-            while (isPolling)
+            while (cts.IsCancellationRequested == false)
             {
-                await UpdateTargetsList(cts.Token);
-                await Task.Delay(2000);
-
-                if(cts.IsCancellationRequested)
-                {
-                    isPolling = false;
-                }
+                await Task.Run(()=> UpdateTargetsList(GetMeadowSerialPorts(), cts.Token));
+                await Task.Delay(5000);
             }
 
             isPolling = false;
@@ -54,53 +46,93 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             cts.Cancel();
         }
 
-        public static async Task PausePollingForDevices(int seconds = 15)
+        //Experiemental use of ioreg to find serial ports for connected Meadow devices
+        //Relies on string parsing - may break if macOS moves ioreg or the output of ioreg changes signifigantly
+        //Adrian - my guess is, this is fairly stable 
+        static List<string> GetMeadowSerialPorts()
         {
-            StopPollingForDevices();
-            await Task.Delay(seconds * 1000);
-            StartPollingForDevices();
-        }
+            Debug.WriteLine("Get Meadow Serial ports");
+            var ports = new List<string>();
 
-        private static async Task UpdateTargetsList(CancellationToken ct)
-        {
-            var serialPorts = MeadowDeviceManager.FindSerialDevices();
-
-            foreach(var port in serialPorts)
+            var psi = new ProcessStartInfo
             {
-                if (ct.IsCancellationRequested)
-                    break;
+                FileName = "/usr/sbin/ioreg",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                Arguments = "-r -c IOUSBHostDevice -l"
+            };
 
-                if (Targets.Any(t => t.MeadowDevice.SerialPort.PortName == port))
-                    continue;
+            string output = string.Empty;
 
-                var timeout = Task<MeadowDevice>.Delay(1000);
-                var meadowTask = MeadowDeviceManager.GetMeadowForSerialPort(port);
-
-                await Task.WhenAny(timeout, meadowTask);
-
-                var meadow = meadowTask.Result;
-
-                if (meadow != null)
+            using (var p = Process.Start(psi))
+            {
+                if (p != null)
                 {
-                    //we should really just have the execution target own an instance of MeadowDevice 
-                    Targets.Add(new MeadowDeviceExecutionTarget(meadow));
-                    meadow.SerialPort.Close();
-                    DeviceListChanged?.Invoke(null);
+                    output = p.StandardOutput.ReadToEnd();
+                    p.WaitForExit();
                 }
             }
 
-            var removeList = new List<MeadowDeviceExecutionTarget>();
-            foreach(var t in Targets)
+            //split into lines
+            var lines = output.Split("\n\r".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+
+            bool foundMeadow = false;
+            for (int i = 0; i < lines.Length; i++)
             {
-                if(serialPorts.Any(p => p == t.MeadowDevice.SerialPort.PortName) == false)
+                if (lines[i].Contains("Meadow F7 Micro"))
+                {
+                    foundMeadow = true;
+                }
+                else if (lines[i].IndexOf("+-o") == 0)
+                {
+                    foundMeadow = false;
+                }
+
+                //now find the IODialinDevice entry which contains the serial port name
+                if (foundMeadow && lines[i].Contains("IODialinDevice"))
+                {
+                    int startIndex = lines[i].IndexOf("/");
+                    int endIndex = lines[i].IndexOf("\"", startIndex + 1);
+                    var port = lines[i].Substring(startIndex, endIndex - startIndex);
+                    Debug.WriteLine($"Found Meadow at {port}");
+
+                    ports.Add(port);
+                    foundMeadow = false;
+                }
+            }
+            return ports;
+        }
+
+        private static void UpdateTargetsList(List<string> serialPorts, CancellationToken ct)
+        {
+            Debug.WriteLine("Update targets list");
+            //var serialPorts = MeadowDeviceManager.FindSerialDevices();
+            //use the local hack version that leverages ioreg
+
+            foreach (var port in serialPorts)
+            {
+                if (ct.IsCancellationRequested)
+                { break; }
+
+                if (Targets.Any(t => t.Id == port))
+                { continue; }
+
+                Targets?.Add(new MeadowDeviceExecutionTarget(port));
+                DeviceListChanged?.Invoke(null);
+            }
+
+            var removeList = new List<MeadowDeviceExecutionTarget>();
+            foreach (var t in Targets)
+            {
+                if (serialPorts.Any(p => p == t.Id) == false)
                 {
                     removeList.Add(t);
                 }
             }
 
-            foreach(var r in removeList)
+            foreach (var r in removeList)
             {
-                Targets.Remove(r);
+                Targets?.Remove(r);
                 DeviceListChanged?.Invoke(null);
             }
         }

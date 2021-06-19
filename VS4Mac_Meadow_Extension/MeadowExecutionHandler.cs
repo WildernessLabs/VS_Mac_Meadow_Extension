@@ -1,5 +1,4 @@
 ﻿using MonoDevelop.Core.Execution;
-using MeadowCLI.DeviceManagement;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Linq;
@@ -7,56 +6,38 @@ using MonoDevelop.Core;
 using System.Collections.Generic;
 using System;
 using MonoDevelop.Core.ProgressMonitoring;
-using MeadowCLI.Hcom;
 using System.IO;
+using Meadow.CLI.Core.DeviceManagement;
+using Meadow.CLI.Core.Internals.Tools;
+using Meadow.CLI.Core.DeviceManagement.Tools;
+using Meadow.CLI.Core.Devices;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
     class MeadowExecutionHandler : IExecutionHandler
     {
-        private ProgressMonitor outputMonitor;
-        private EventHandler<MeadowMessageEventArgs> messageEventHandler;
-        private MeadowSerialDevice meadowExecutionTarget;
+        const string GUID_EXTENSION = ".guid";
+        OutputProgressMonitor monitor;
+        OutputLogger logger;
+
+        string[] SYSTEM_FILES = { "App.exe", "System.Net.dll", "System.Net.Http.dll", "mscorlib.dll", "System.dll", "System.Core.dll", "Meadow.dll" };
 
         public bool CanExecute(ExecutionCommand command)
-        {   //returning false here swaps the play button with a build button 
+        {   //returning false here swaps the play button with a build button
+
             return (command is MeadowExecutionCommand);
         }
 
         public MeadowExecutionHandler()
         {
-            messageEventHandler = OnMeadowMessage;
+           
+            logger = new OutputLogger();
         }
 
-        object _lock = new object();
-
-        private void OnMeadowMessage(object sender, MeadowMessageEventArgs args)
-        {
-            lock (_lock)
-            {
-                if (outputMonitor == null)
-                {
-                    outputMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetOutputProgressMonitor("Meadow", IconId.Null, true, true, true);
-                }
-
-                outputMonitor.Log.WriteLine(args.Message);
-            }
-        }
 
         public ProcessAsyncOperation Execute(ExecutionCommand command, OperationConsole console)
         {
             var cmd = command as MeadowExecutionCommand;
-
-            //unsubscribe from previous device if it exists
-            if(meadowExecutionTarget != null && messageEventHandler != null)
-            {
-                meadowExecutionTarget.OnMeadowMessage -= messageEventHandler;
-            }
-
-            //get a ref to the new execution target
-            meadowExecutionTarget = (cmd.Target as MeadowDeviceExecutionTarget).MeadowDevice;
-
-            meadowExecutionTarget.OnMeadowMessage += messageEventHandler;
 
             var cts = new CancellationTokenSource();
             var deployTask = DeployApp(cmd.Target as MeadowDeviceExecutionTarget, cmd.OutputDirectory, cts);
@@ -64,105 +45,117 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             return new ProcessAsyncOperation(deployTask, cts);
         }
 
+        MeadowDeviceHelper meadow;
+
         //https://stackoverflow.com/questions/29798243/how-to-write-to-the-tool-output-pad-from-within-a-monodevelop-add-in
         async Task DeployApp(MeadowDeviceExecutionTarget target, string folder, CancellationTokenSource cts)
         {
             DeploymentTargetsManager.StopPollingForDevices();
 
-            ProgressMonitor toolMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetToolOutputProgressMonitor(true, cts);
-            ProgressMonitor outMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetStatusProgressMonitor("Meadow", IconId.Null, true);
-
-            var monitor = new AggregatedProgressMonitor(toolMonitor, new ProgressMonitor[] { outMonitor });
-
-            monitor.BeginTask("Deploying to Meadow ...", 1);
+            meadow?.Dispose();
 
             try
             {
-                var meadow = target.MeadowDevice;
+                var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Id, logger: logger);
 
-                if(await InitializeMeadowDevice(meadow, monitor, cts) == false)
+                meadow = new MeadowDeviceHelper(device, device.Logger);
+
+                await meadow.MonoDisableAsync(cts.Token);
+
+                var fileNameDll = Path.Combine(folder, "App.dll");
+                var fileNameExe = Path.Combine(folder, "App.exe");
+
+                if (File.Exists(fileNameDll))
                 {
-                    throw new Exception("Failed to initialize Meadow");
+                    if (File.Exists(fileNameExe))
+                    {
+                        File.Delete(fileNameExe);
+                    }
+                    File.Copy(fileNameDll, fileNameExe);
                 }
 
-                var meadowFiles = await GetFilesOnDevice(meadow, monitor, cts);
+                await meadow.DeployAppAsync(fileNameExe, true, cts.Token);
 
-                var localFiles = await GetLocalFiles(monitor, cts, folder);
-
-                await DeleteUnusedFiles(meadow, monitor, cts, meadowFiles, localFiles);
-
-                await DeployApp(meadow, monitor, cts, folder, meadowFiles, localFiles);
-
-                await ResetMeadowAndStartMono(meadow, monitor, cts);
+                await meadow.MonoEnableAsync(cts.Token);
             }
             catch (Exception ex)
             {
-                await monitor.ErrorLog.WriteLineAsync($"Error: {ex.Message}");
+                await monitor?.ErrorLog.WriteLineAsync($"Error: {ex.Message}");
             }
             finally
             {
-                monitor?.EndTask();
-                monitor?.Dispose();
+                //monitor?.EndTask();
+                //monitor?.Dispose();
 
-                DeploymentTargetsManager.StartPollingForDevices();
+                //fire and forget
+                _ = DeploymentTargetsManager.StartPollingForDevices();
             }
-        }
 
-        async Task<bool> InitializeMeadowDevice(MeadowSerialDevice meadow, ProgressMonitor monitor, CancellationTokenSource cts)
+            return;
+        } 
+
+        IDictionary<string, uint> GetLocalAppFiles(
+            ProgressMonitor monitor,
+            CancellationTokenSource cts,
+            string appFolder)
         {
-            if (cts.IsCancellationRequested) return true;
+            var files = new Dictionary<string, uint>();
 
-            await monitor.Log.WriteLineAsync("Initializing Meadow");
+            //crawl dependences
+            //var paths = Directory.EnumerateFiles(appFolder, "*.*", SearchOption.TopDirectoryOnly);
 
-            if (meadow == null)
+            List<string> dependences;
+         //   RenameAppLib(appFolder);
+        
+            dependences = AssemblyManager.GetDependencies("App.dll", appFolder);
+            dependences.Add("App.dll");
+
+            foreach (var file in dependences)
             {
-                monitor.ErrorLog.WriteLine("Can't read Meadow device");
-                return false;
+                if (cts.IsCancellationRequested) { break; }
+
+                using (FileStream fs = File.Open(Path.Combine(appFolder, file), FileMode.Open))
+                {
+                    var len = (int)fs.Length;
+                    var bytes = new byte[len];
+
+                    fs.Read(bytes, 0, len);
+
+                    //0x
+                    var crc = CrcTools.Crc32part(bytes, len, 0);// 0x04C11DB7);
+
+                  //  Console.WriteLine($"{file} crc is {crc}");
+                    files.Add(Path.GetFileName(file), crc);
+                }
             }
 
-            meadow.Initialize(false);
-            MeadowDeviceManager.MonoDisable(meadow);
-            await Task.Delay(3000); //give device time to reboot
-
-            if(meadow.Initialize() == false)
-            {
-                monitor.ErrorLog.WriteLine("Couldn't initialize serial port");
-                return false;
-            }
-            return true;
+            return files;
         }
 
-        async Task<(List<string> files, List<UInt32> crcs)> GetFilesOnDevice(MeadowSerialDevice meadow, ProgressMonitor monitor, CancellationTokenSource cts)
-        {
-            if (cts.IsCancellationRequested) { return (new List<string>(), new List<UInt32>()); }
-
-            await monitor.Log.WriteLineAsync("Checking files on device (may take several seconds)");
-
-            var meadowFiles = await meadow.GetFilesAndCrcs(30000);
-
-            foreach (var f in meadowFiles.files)
-            {
-                if (cts.IsCancellationRequested) break;
-                await monitor.Log.WriteLineAsync($"Found {f}").ConfigureAwait(false);
-            }
-
-            return meadowFiles;
-        }
-
-        async Task<(List<string> files, List<UInt32> crcs)>     GetLocalFiles(ProgressMonitor monitor, CancellationTokenSource cts, string folder)
+        IDictionary<string, uint> GetLocalAssets(
+            ProgressMonitor monitor,
+            CancellationTokenSource cts,
+            string assetsFolder)
         {
             //get list of files in folder
-            var paths = Directory.EnumerateFiles(folder, "*.*", SearchOption.TopDirectoryOnly)
-            .Where(s => s.EndsWith(".exe") ||
-                        s.EndsWith(".dll") ||
+            var paths = Directory.EnumerateFiles(assetsFolder, "*.*", SearchOption.TopDirectoryOnly)
+            .Where(s => //s.EndsWith(".exe") ||
+                        //s.EndsWith(".dll") ||
                         s.EndsWith(".bmp") ||
                         s.EndsWith(".jpg") ||
                         s.EndsWith(".jpeg") ||
-                        s.EndsWith(".txt"));
+                        s.EndsWith(".txt") ||
+                        s.EndsWith(".json") ||
+                        s.EndsWith(".xml") ||
+                        s.EndsWith(".yml") 
+                        //s.EndsWith("Meadow.Foundation.dll")
+                        );
 
-            var files = new List<string>();
-            var crcs = new List<UInt32>();
+            //   var dependences = AssemblyManager.GetDependencies("App.exe" ,folder);
 
+            var files = new Dictionary<string, uint>();
+
+            //crawl other files (we can optimize)
             foreach (var file in paths)
             {
                 if (cts.IsCancellationRequested) break;
@@ -173,89 +166,99 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                     var bytes = new byte[len];
 
                     fs.Read(bytes, 0, len);
-                    
+
                     //0x
                     var crc = CrcTools.Crc32part(bytes, len, 0);// 0x04C11DB7);
 
-                    Console.WriteLine($"{file} crc is {crc}");
-                    files.Add(Path.GetFileName(file));
-                    crcs.Add(crc);
+                    files.Add(Path.GetFileName(file), crc);
                 }
             }
 
-            return (files, crcs);
+            return files;
         }
 
-        async Task DeleteUnusedFiles (MeadowSerialDevice meadow, ProgressMonitor monitor, CancellationTokenSource cts,
-            (List<string> files, List<UInt32> crcs) meadowFiles, (List<string> files, List<UInt32> crcs) localFiles)
+        (List<string> files, List<UInt32> crcs) GetSystemFiles((List<string> files, List<UInt32> crcs) files)
         {
-            if (cts.IsCancellationRequested)
-                return;
+            (List<string> files, List<UInt32> crcs) systemFiles = (new List<string>(), new List<UInt32>());
 
-            foreach(var file in meadowFiles.files)
+            //clean this up later with a model object and linn
+            for (int i = 0; i < files.files.Count; i++)
             {
-                if (cts.IsCancellationRequested) { break; }
-       
-                if(localFiles.files.Contains(file) == false)
+                if (SYSTEM_FILES.Contains(files.files[i]))
                 {
-                    await meadow.DeleteFile(file);
-                    await monitor.Log.WriteLineAsync($"Removing {file}").ConfigureAwait(false);
+                    systemFiles.files.Add(files.files[i]);
+                    systemFiles.crcs.Add(files.crcs[i]);
                 }
             }
+
+            return systemFiles;
         }
 
-        async Task DeployApp(MeadowSerialDevice meadow, ProgressMonitor monitor, CancellationTokenSource cts, string folder,
-            (List<string> files, List<UInt32> crcs) meadowFiles, (List<string> files, List<UInt32> crcs) localFiles)
+        (List<string> files, List<UInt32> crcs) GetNonSystemFiles((List<string> files, List<UInt32> crcs) files)
+        {
+            (List<string> files, List<UInt32> crcs) otherFiles = (new List<string>(), new List<UInt32>());
+
+            //clean this up later with a model object and linn
+            for (int i = 0; i < files.files.Count; i++)
+            {
+                if (SYSTEM_FILES.Contains(files.files[i]) == false)
+                {
+                    otherFiles.files.Add(files.files[i]);
+                    otherFiles.crcs.Add(files.crcs[i]);
+                }
+            }
+
+            return otherFiles;
+        }
+
+        /*
+        async Task DeployFilesWithGuidCheck(
+            MeadowSerialDevice meadow,
+            ProgressMonitor monitor,
+            CancellationTokenSource cts,
+            string folder,
+            (List<string> files, List<UInt32> crcs) meadowFiles,
+            (List<string> files, List<UInt32> crcs) localFiles)
         {
             if (cts.IsCancellationRequested)
-                return;
+            { return; }
 
-            for(int i = 0; i < localFiles.files.Count; i++)
+            var weaver = new WeaverCRC();
+
+            for (int i = 0; i < localFiles.files.Count; i++)
             {
-                if (meadowFiles.crcs.Contains(localFiles.crcs[i])) continue;
+                var guidFileName = localFiles.files[i] + GUID_EXTENSION;
+                string guidOnMeadow = string.Empty;
 
-                await WriteFileToMeadow(meadow, monitor, cts,
-                    folder, localFiles.files[i], true);
+                if(meadowFiles.files.Contains(guidFileName))
+                {
+                    //ToDo
+                   // guidOnMeadow = await meadow.GetInitialFileData(guidFileName);
+                    await Task.Delay(100);
+                }
+
+                //calc guid 
+                var guidLocal = weaver.GetCrcGuid(Path.Combine(folder, localFiles.files[i])).ToString();
+
+                if(guidLocal == guidOnMeadow)
+                {
+                    continue;
+                }
+
+                Console.WriteLine($"Guids didn't match for {localFiles.files[i]}");
+                await meadow.WriteFileAsync(Path.Combine(folder, localFiles.files[i]), localFiles.files[i]);
+
+                await Task.Delay(250);
+
+                //need to write new Guid file
+                
+                var guidFilePath = Path.Combine(folder, guidFileName);
+                File.WriteAllText(guidFilePath, guidLocal);
+
+                await meadow.WriteFileAsync(guidFilePath, guidFileName);
+
+                await Task.Delay(250);
             }
-        }
-
-        async Task WriteFileToMeadow(MeadowSerialDevice meadow, ProgressMonitor monitor, CancellationTokenSource cts, string folder, string file, bool overwrite = false)
-        {
-            if (cts.IsCancellationRequested) { return; }
-
-            if (overwrite || await meadow.IsFileOnDevice(file).ConfigureAwait(false) == false)
-            {
-                await monitor.Log.WriteLineAsync($"Writing {file}").ConfigureAwait(false);
-                await meadow.WriteFile(file, folder).ConfigureAwait(false);
-            }
-        }
-
-        async Task ResetMeadowAndStartMono(MeadowSerialDevice meadow, ProgressMonitor monitor, CancellationTokenSource cts)
-        {
-            if(cts.IsCancellationRequested) { return; }
-
-            string serial = meadow.DeviceInfo.SerialNumber;
-
-            monitor.ReportSuccess("Resetting Meadow and starting app");
-
-            MeadowDeviceManager.MonoEnable(meadow);
-
-            try
-            {
-                MeadowDeviceManager.ResetMeadow(meadow, 0);
-            }
-            catch
-            {
-                //ignore for now
-            }
-
-            await Task.Delay(2500);//wait for reboot
-
-            //reconnect serial port
-            if(meadow.Initialize() == false)
-            {
-                //find device with matching serial //ToDo
-            }
-        }
+        } */
     }
 }
