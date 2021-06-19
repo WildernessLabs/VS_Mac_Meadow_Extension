@@ -1,14 +1,11 @@
 ﻿using MonoDevelop.Core.Execution;
 using System.Threading.Tasks;
 using System.Threading;
-using System.Linq;
 using MonoDevelop.Core;
 using System.Collections.Generic;
 using System;
-using MonoDevelop.Core.ProgressMonitoring;
 using System.IO;
 using Meadow.CLI.Core.DeviceManagement;
-using Meadow.CLI.Core.Internals.Tools;
 using Meadow.CLI.Core.DeviceManagement.Tools;
 using Meadow.CLI.Core.Devices;
 
@@ -16,11 +13,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
     class MeadowExecutionHandler : IExecutionHandler
     {
-        const string GUID_EXTENSION = ".guid";
         OutputProgressMonitor monitor;
         OutputLogger logger;
-
-        string[] SYSTEM_FILES = { "App.exe", "System.Net.dll", "System.Net.Http.dll", "mscorlib.dll", "System.dll", "System.Core.dll", "Meadow.dll" };
 
         public bool CanExecute(ExecutionCommand command)
         {   //returning false here swaps the play button with a build button
@@ -34,7 +28,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             logger = new OutputLogger();
         }
 
-
         public ProcessAsyncOperation Execute(ExecutionCommand command, OperationConsole console)
         {
             var cmd = command as MeadowExecutionCommand;
@@ -43,6 +36,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             var deployTask = DeployApp(cmd.Target as MeadowDeviceExecutionTarget, cmd.OutputDirectory, cts);
 
             return new ProcessAsyncOperation(deployTask, cts);
+
+           // return DebuggingService.GetExecutionHandler().Execute(command, console);
         }
 
         MeadowDeviceHelper meadow;
@@ -56,27 +51,27 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             try
             {
-                var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Id, logger: logger);
+                var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Port, logger: logger);
 
                 meadow = new MeadowDeviceHelper(device, device.Logger);
 
                 await meadow.MonoDisableAsync(cts.Token);
 
-                var fileNameDll = Path.Combine(folder, "App.dll");
-                var fileNameExe = Path.Combine(folder, "App.exe");
-
-                if (File.Exists(fileNameDll))
-                {
-                    if (File.Exists(fileNameExe))
-                    {
-                        File.Delete(fileNameExe);
-                    }
-                    File.Copy(fileNameDll, fileNameExe);
-                }
+                var fileNameExe = Path.Combine(folder, "App.dll");
 
                 await meadow.DeployAppAsync(fileNameExe, true, cts.Token);
 
                 await meadow.MonoEnableAsync(cts.Token);
+
+                //sit here and wait for cancellation
+                while (true)
+                {
+                    await Task.Delay(1000);
+                    if(cts.Token.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -84,8 +79,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             }
             finally
             {
-                //monitor?.EndTask();
-                //monitor?.Dispose();
+                meadow?.Dispose();
 
                 //fire and forget
                 _ = DeploymentTargetsManager.StartPollingForDevices();
@@ -130,85 +124,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             }
 
             return files;
-        }
-
-        IDictionary<string, uint> GetLocalAssets(
-            ProgressMonitor monitor,
-            CancellationTokenSource cts,
-            string assetsFolder)
-        {
-            //get list of files in folder
-            var paths = Directory.EnumerateFiles(assetsFolder, "*.*", SearchOption.TopDirectoryOnly)
-            .Where(s => //s.EndsWith(".exe") ||
-                        //s.EndsWith(".dll") ||
-                        s.EndsWith(".bmp") ||
-                        s.EndsWith(".jpg") ||
-                        s.EndsWith(".jpeg") ||
-                        s.EndsWith(".txt") ||
-                        s.EndsWith(".json") ||
-                        s.EndsWith(".xml") ||
-                        s.EndsWith(".yml") 
-                        //s.EndsWith("Meadow.Foundation.dll")
-                        );
-
-            //   var dependences = AssemblyManager.GetDependencies("App.exe" ,folder);
-
-            var files = new Dictionary<string, uint>();
-
-            //crawl other files (we can optimize)
-            foreach (var file in paths)
-            {
-                if (cts.IsCancellationRequested) break;
-
-                using (FileStream fs = File.Open(file, FileMode.Open))
-                {
-                    var len = (int)fs.Length;
-                    var bytes = new byte[len];
-
-                    fs.Read(bytes, 0, len);
-
-                    //0x
-                    var crc = CrcTools.Crc32part(bytes, len, 0);// 0x04C11DB7);
-
-                    files.Add(Path.GetFileName(file), crc);
-                }
-            }
-
-            return files;
-        }
-
-        (List<string> files, List<UInt32> crcs) GetSystemFiles((List<string> files, List<UInt32> crcs) files)
-        {
-            (List<string> files, List<UInt32> crcs) systemFiles = (new List<string>(), new List<UInt32>());
-
-            //clean this up later with a model object and linn
-            for (int i = 0; i < files.files.Count; i++)
-            {
-                if (SYSTEM_FILES.Contains(files.files[i]))
-                {
-                    systemFiles.files.Add(files.files[i]);
-                    systemFiles.crcs.Add(files.crcs[i]);
-                }
-            }
-
-            return systemFiles;
-        }
-
-        (List<string> files, List<UInt32> crcs) GetNonSystemFiles((List<string> files, List<UInt32> crcs) files)
-        {
-            (List<string> files, List<UInt32> crcs) otherFiles = (new List<string>(), new List<UInt32>());
-
-            //clean this up later with a model object and linn
-            for (int i = 0; i < files.files.Count; i++)
-            {
-                if (SYSTEM_FILES.Contains(files.files[i]) == false)
-                {
-                    otherFiles.files.Add(files.files[i]);
-                    otherFiles.crcs.Add(files.crcs[i]);
-                }
-            }
-
-            return otherFiles;
         }
 
         /*

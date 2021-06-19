@@ -5,7 +5,6 @@ using MonoDevelop.Core;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
-    // is this used at all??
     public class MeadowExecutionCommand : ProcessExecutionCommand
     {
         // Adrian: Task because it's been assigned in a non-async method
