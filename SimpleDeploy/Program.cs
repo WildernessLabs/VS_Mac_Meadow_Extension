@@ -51,7 +51,7 @@ namespace SimpleDeploy
 
                 await meadowDH.MonoDisableAsync(cts.Token);
 
-                meadowDH.DeployAppAsync();
+                //meadowDH.DeployAppAsync();
 
                 var items = await meadowDH.GetFilesAndFoldersAsync(new TimeSpan(0, 0, 10), cts.Token);
 

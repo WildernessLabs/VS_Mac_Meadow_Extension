@@ -24,7 +24,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         public MeadowExecutionHandler()
         {
-           
             logger = new OutputLogger();
         }
 
@@ -55,13 +54,9 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
                 meadow = new MeadowDeviceHelper(device, device.Logger);
 
-                await meadow.MonoDisableAsync(cts.Token);
-
                 var fileNameExe = Path.Combine(folder, "App.dll");
 
                 await meadow.DeployAppAsync(fileNameExe, true, cts.Token);
-
-                await meadow.MonoEnableAsync(cts.Token);
 
                 //sit here and wait for cancellation
                 while (true)
