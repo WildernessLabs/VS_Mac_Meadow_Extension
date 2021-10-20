@@ -31,14 +31,22 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             base.OnRun(startInfo);
         }
 
-        protected override void EndSession()
+        protected override void OnExit()
         {
-            base.EndSession();
+            CleanUp();
 
+            try
+            {
+                base.OnExit();
+            } catch { }
+        }
+
+        void CleanUp()
+        {
             if (!debugCancelTokenSource.IsCancellationRequested)
-                debugCancelTokenSource.Cancel();
+                debugCancelTokenSource?.Cancel();
 
-            meadowStartInfo.ExecutionCommand.Cleanup();
+            meadowStartInfo?.ExecutionCommand?.Cleanup();
         }
     }
 }

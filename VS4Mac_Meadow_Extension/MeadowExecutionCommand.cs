@@ -31,6 +31,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         {
             DeploymentTargetsManager.StopPollingForDevices();
 
+            cleanedup = false;
             meadow?.Dispose();
 
             var target = this.Target as MeadowDeviceExecutionTarget;
@@ -56,18 +57,24 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
                 Cleanup();
             }
-
-            return;
         }
 
+        bool cleanedup = true;
         public void Cleanup()
         {
+            if (cleanedup)
+                return;
+
             meadowDebugServer?.StopListeningAsync();
             meadowDebugServer?.Dispose();
+            meadowDebugServer = null;
 
             meadow?.Dispose();
 
-            _ = DeploymentTargetsManager.StartPollingForDevices();        
+            if (!cleanedup)
+                _ = DeploymentTargetsManager.StartPollingForDevices();
+
+            cleanedup = true;
         }
     }
 }

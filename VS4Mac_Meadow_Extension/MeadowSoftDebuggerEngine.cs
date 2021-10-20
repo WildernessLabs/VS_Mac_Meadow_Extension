@@ -2,6 +2,7 @@
 using Mono.Debugging.Soft;
 using MonoDevelop.Core.Execution;
 using MonoDevelop.Debugger;
+using MonoDevelop.Debugger.Soft;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -28,6 +29,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
                 var startInfo = new MeadowSoftDebuggerStartInfo(command, args);
 
+                // TODO: Get User Assemblies (not system references and call to set them)
+                // SoftDebuggerEngine.SetUserAssemblyNames(startInfo, new List<string> { });
                 return startInfo;
             }
 
