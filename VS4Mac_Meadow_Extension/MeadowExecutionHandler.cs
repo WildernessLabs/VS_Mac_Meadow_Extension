@@ -17,6 +17,15 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             => command is MeadowExecutionCommand;
 
         public ProcessAsyncOperation Execute(ExecutionCommand command, OperationConsole console)
-            => null;
+        {
+            var cts = new CancellationTokenSource();
+
+            if (command is MeadowExecutionCommand meadowCommand)
+            {
+                return new ProcessAsyncOperation(meadowCommand.DeployApp(-1, cts.Token), cts);
+            }
+
+            return null;
+        }
     }
 }
