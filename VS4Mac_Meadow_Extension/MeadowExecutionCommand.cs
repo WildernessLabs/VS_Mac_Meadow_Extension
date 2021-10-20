@@ -22,7 +22,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         public FilePath OutputDirectory { get; set; }
 
-        OutputProgressMonitor monitor;
+        //OutputProgressMonitor monitor;
         OutputLogger logger;
         MeadowDeviceHelper meadow = null;
 
@@ -50,22 +50,24 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 {
                     var server = await meadow.StartDebuggingSessionAsync(debugPort, cancellationToken);
 
-                    await monitor?.Log?.WriteLineAsync($"Started Debug Server: {server.LocalEndpoint.Address}:{server.LocalEndpoint.Port}");
+                    //await monitor?.Log?.WriteLineAsync($"Started Debug Server: {server.LocalEndpoint.Address}:{server.LocalEndpoint.Port}");
                 }
                 else
                 {
                     // sleep until cancel since this is a normal deploy without debug
                     while (!cancellationToken.IsCancellationRequested)
                         await Task.Delay(1000);
+
+                    Cleanup();
                 }
             }
             catch (Exception ex)
             {
-                await monitor?.ErrorLog?.WriteLineAsync($"Error: {ex.Message}");
+                //await monitor?.ErrorLog?.WriteLineAsync($"Error: {ex.Message}");
             }
             finally
             {
-                Cleanup();
+                
             }
 
             return;
