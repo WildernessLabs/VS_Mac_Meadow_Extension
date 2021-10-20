@@ -52,6 +52,12 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
                     await monitor.Log.WriteLineAsync($"Started Debug Server: {server.LocalEndpoint.Address}:{server.LocalEndpoint.Port}");
                 }
+                else
+                {
+                    // sleep until cancel since this is a normal deploy without debug
+                    while (!cancellationToken.IsCancellationRequested)
+                        await Task.Delay(1000);
+                }
             }
             catch (Exception ex)
             {
