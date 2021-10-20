@@ -50,7 +50,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 {
                     var server = await meadow.StartDebuggingSessionAsync(debugPort, cancellationToken);
 
-                    await monitor.Log.WriteLineAsync($"Started Debug Server: {server.LocalEndpoint.Address}:{server.LocalEndpoint.Port}");
+                    await monitor?.Log?.WriteLineAsync($"Started Debug Server: {server.LocalEndpoint.Address}:{server.LocalEndpoint.Port}");
                 }
                 else
                 {
@@ -61,7 +61,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             }
             catch (Exception ex)
             {
-                await monitor?.ErrorLog.WriteLineAsync($"Error: {ex.Message}");
+                await monitor?.ErrorLog?.WriteLineAsync($"Error: {ex.Message}");
             }
             finally
             {
