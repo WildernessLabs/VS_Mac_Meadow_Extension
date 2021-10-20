@@ -6,6 +6,7 @@ using System.Threading;
 using Meadow.CLI.Core.Devices;
 using Meadow.CLI.Core.DeviceManagement;
 using System;
+using Meadow.CLI.Core.Internals.MeadowCommunication.ReceiveClasses;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -22,9 +23,9 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         public FilePath OutputDirectory { get; set; }
 
-        //OutputProgressMonitor monitor;
         OutputLogger logger;
         MeadowDeviceHelper meadow = null;
+        DebuggingServer meadowDebugServer = null;
 
         public async Task DeployApp(int debugPort, CancellationToken cancellationToken)
         {
@@ -33,41 +34,27 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             meadow?.Dispose();
 
             var target = this.Target as MeadowDeviceExecutionTarget;
+            var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Port, logger: logger);
 
-            try
+            meadow = new MeadowDeviceHelper(device, device.Logger);
+
+            var fileNameExe = System.IO.Path.Combine(OutputDirectory, "App.dll");
+
+            var debug = debugPort > 1000;
+
+            await meadow.DeployAppAsync(fileNameExe, debug, cancellationToken);
+
+            if (debug)
             {
-                var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Port, logger: logger);
-
-                meadow = new MeadowDeviceHelper(device, device.Logger);
-
-                var fileNameExe = System.IO.Path.Combine(OutputDirectory, "App.dll");
-
-                var debug = debugPort > 1000;
-
-                await meadow.DeployAppAsync(fileNameExe, debug, cancellationToken);
-
-                if (debug)
-                {
-                    var server = await meadow.StartDebuggingSessionAsync(debugPort, cancellationToken);
-
-                    //await monitor?.Log?.WriteLineAsync($"Started Debug Server: {server.LocalEndpoint.Address}:{server.LocalEndpoint.Port}");
-                }
-                else
-                {
-                    // sleep until cancel since this is a normal deploy without debug
-                    while (!cancellationToken.IsCancellationRequested)
-                        await Task.Delay(1000);
-
-                    Cleanup();
-                }
+                meadowDebugServer = await meadow.StartDebuggingSessionAsync(debugPort, cancellationToken);
             }
-            catch (Exception ex)
+            else
             {
-                //await monitor?.ErrorLog?.WriteLineAsync($"Error: {ex.Message}");
-            }
-            finally
-            {
-                
+                // sleep until cancel since this is a normal deploy without debug
+                while (!cancellationToken.IsCancellationRequested)
+                    await Task.Delay(1000);
+
+                Cleanup();
             }
 
             return;
@@ -75,7 +62,11 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         public void Cleanup()
         {
+            meadowDebugServer?.StopListeningAsync();
+            meadowDebugServer?.Dispose();
+
             meadow?.Dispose();
+
             _ = DeploymentTargetsManager.StartPollingForDevices();        
         }
     }
