@@ -49,7 +49,7 @@ namespace SimpleDeploy
 
                 var meadowDH = new MeadowDeviceHelper(meadow, logger);
 
-                await meadowDH.MonoDisableAsync(cts.Token);
+                await meadowDH.MonoDisableAsync(false, cts.Token);
 
                 //meadowDH.DeployAppAsync();
 
