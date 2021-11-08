@@ -21,12 +21,20 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         protected override async void OnRun(DebuggerStartInfo startInfo)
         {
-            meadowStartInfo = startInfo as MeadowSoftDebuggerStartInfo;
+            try
+            {
+                meadowStartInfo = startInfo as MeadowSoftDebuggerStartInfo;
 
-            var connectArgs = meadowStartInfo.StartArgs as SoftDebuggerConnectArgs;
-            var port = connectArgs?.DebugPort ?? 0;
+                var connectArgs = meadowStartInfo.StartArgs as SoftDebuggerConnectArgs;
+                var port = connectArgs?.DebugPort ?? 0;
 
-            await meadowStartInfo.ExecutionCommand.DeployApp(port, debugCancelTokenSource.Token);
+                await meadowStartInfo.ExecutionCommand.DeployApp(port, debugCancelTokenSource.Token);
+            }
+
+            catch (Exception ex)
+            {
+                Console.WriteLine("Deploy error: " + ex.Message);
+            }
 
             base.OnRun(startInfo);
         }

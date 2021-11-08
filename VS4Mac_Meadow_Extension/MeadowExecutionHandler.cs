@@ -22,7 +22,14 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             if (command is MeadowExecutionCommand meadowCommand)
             {
-                return new ProcessAsyncOperation(meadowCommand.DeployApp(-1, cts.Token), cts);
+                try
+                {
+                    return new ProcessAsyncOperation(meadowCommand.DeployApp(-1, cts.Token), cts);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
 
             return null;
