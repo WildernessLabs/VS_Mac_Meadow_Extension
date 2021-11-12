@@ -78,4 +78,11 @@
     <Extension path = "/MonoDevelop/Core/ExecutionHandlers">
         <ExecutionHandler id="Meadow" class = "Meadow.Sdks.IdeExtensions.Vs4Mac.MeadowExecutionHandler"/>
     </Extension>
+
+    <Extension path="/MonoDevelop/Debugging/DebuggerEngines">
+		<DebuggerEngine id="Mono.Debugger.Soft.Meadow"
+			name="Mono Soft Debugger for Meadow"
+			features="Breakpoints, Pause, Stepping, DebugFile, ConditionalBreakpoints, Tracepoints, Catchpoints"
+			type="Meadow.Sdks.IdeExtensions.Vs4Mac.MeadowSoftDebuggerEngine" />
+	</Extension>
 </ExtensionModel>
