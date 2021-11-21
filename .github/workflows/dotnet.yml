@@ -1,4 +1,4 @@
-name: Build VS4Mac Extension
+name: VS4Mac Extension
 
 on:
   push:
