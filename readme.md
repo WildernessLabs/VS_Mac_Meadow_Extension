@@ -1,6 +1,10 @@
 # Visual Studio for Mac Extension
 
-This is the add-in for Visual Studio for Mac that enables Meadow projects to be built and deployed from Mac OS. 
+This is the add-in for Visual Studio for Mac that enables Meadow projects to be built and deployed from Mac OS.
+
+[![Build](https://github.com/WildernessLabs/VS_Mac_Meadow_Extension/actions/workflows/dotnet.yml/badge.svg)](https://github.com/WildernessLabs/VS_Mac_Meadow_Extension/actions)
+[![Version](https://img.shields.io/nuget/v/Meadow.svg)](https://nuget.org/packages/Meadow)
+[![Downloads](https://img.shields.io/nuget/dt/Meadow.svg)](https://nuget.org/packages/Meadow)
 
 ## Installation 
 
