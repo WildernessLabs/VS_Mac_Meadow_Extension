@@ -7,6 +7,7 @@ using Meadow.CLI.Core.Devices;
 using Meadow.CLI.Core.DeviceManagement;
 using System;
 using Meadow.CLI.Core.Internals.MeadowCommunication.ReceiveClasses;
+using Meadow.CLI.Core;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -38,6 +39,20 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Port, logger: logger);
 
             meadow = new MeadowDeviceHelper(device, device.Logger);
+
+            //wrap this is a try/catch so it doesn't crash if the developer is offline
+            try
+            {
+                string osVersion = await meadow.GetOSVersion(TimeSpan.FromSeconds(30), cancellationToken)
+                    .ConfigureAwait(false);
+
+                await new DownloadManager(logger).DownloadLatestAsync (osVersion)
+                    .ConfigureAwait (false);
+            }
+            catch
+            {
+                Console.WriteLine("OS download failed, make sure you have an active internet connection");
+            }
 
             var fileNameExe = System.IO.Path.Combine(OutputDirectory, "App.dll");
 
