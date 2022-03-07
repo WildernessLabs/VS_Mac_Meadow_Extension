@@ -4,10 +4,10 @@ using Mono.Addins.Description;
 [assembly: Addin(
     "Meadow",
     Namespace = "WildernessLabs.Sdks",
-    Version = "0.9.1.0"
+    Version = "0.19.0.0"
 )]
 
 [assembly: AddinName("Meadow")]
 [assembly: AddinCategory("IDE extensions")]
 [assembly: AddinDescription("Build and deployment tools for Meadow by Wilderness Labs")]
-[assembly: AddinAuthor("Bryan Costanich, Adrian Stevens, Brian Kim")]
+[assembly: AddinAuthor("Bryan Costanich, Adrian Stevens, Brian Kim, Dominique Louis")]
