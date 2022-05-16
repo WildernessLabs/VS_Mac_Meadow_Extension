@@ -50,7 +50,7 @@ jobs:
         path: 'main/VS4Mac_Meadow_Extension/bin/Release/net472/*.mpack'
 
   build-mac-2022:
-    runs-on: macos-latest
+    runs-on: macos-12
 
     steps:
     - name: Checkout current repo
