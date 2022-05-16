@@ -1,11 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <IsAddin>True</IsAddin>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MonoDevelop.Addins" Version="0.4.7" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.0" />
+    <PackageReference Include="Microsoft.VisualStudioMac.Sdk" Version="17.0.0-preview.7955" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Meadow.CLI\Meadow.CLI.Core\Meadow.CLI.Core.csproj" />
@@ -20,6 +23,6 @@
     <AddinReference Include="MonoDevelop.Debugger.Soft" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Properties\AddinInfo.2022.cs" />
+    <Compile Remove="Properties\AddinInfo.cs" />
   </ItemGroup>
 </Project>
