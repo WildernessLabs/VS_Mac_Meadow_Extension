@@ -13,12 +13,12 @@ jobs:
 
     steps:
     - name: Checkout current repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: main
 
     - name: Checkout Meadow.CLI.Core side-by-side
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: WildernessLabs/Meadow.CLI
         path: Meadow.CLI
@@ -28,7 +28,7 @@ jobs:
         $VM_ASSETS/select-xamarin-sdk-v2.sh --mono=6.12 --mac=8.2
 
     - name: Setup .NET Core SDK 5.0.x and 6.0.x
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v2
       with:
         dotnet-version: |
           5.0.x
@@ -48,3 +48,43 @@ jobs:
       with:
         name: Meadow.Mac.mpack.zip
         path: 'main/VS4Mac_Meadow_Extension/bin/Release/net472/*.mpack'
+
+  build-mac-2022:
+    runs-on: macos-12
+
+    steps:
+    - name: Checkout current repo
+      uses: actions/checkout@v3
+      with:
+        path: main
+
+    - name: Checkout Meadow.CLI.Core side-by-side
+      uses: actions/checkout@v3
+      with:
+        repository: WildernessLabs/Meadow.CLI
+        path: Meadow.CLI
+
+    - name: Set default Xamarin SDK versions
+      run: |
+        $VM_ASSETS/select-xamarin-sdk-v2.sh --mono=6.12 --mac=8.2
+
+    - name: Setup .NET Core 6.0.x
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: |
+          6.0.x
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1.0.5
+
+    - name: Restore dependencies
+      run: dotnet msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.2022.csproj /t:Restore
+
+    - name: Build VS4M-2022 Extension
+      run: dotnet msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.2022.csproj /t:Build /p:Configuration=Release /p:CreatePackage=true
+
+    - name: Upload mpack Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: Meadow.Mac.mpack.zip
+        path: 'main/VS4Mac_Meadow_Extension/bin/Release/net6.0/*.mpack'

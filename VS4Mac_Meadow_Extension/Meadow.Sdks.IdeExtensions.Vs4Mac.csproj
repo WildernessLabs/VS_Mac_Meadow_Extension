@@ -11,12 +11,15 @@
     <ProjectReference Include="..\..\Meadow.CLI\Meadow.CLI.Core\Meadow.CLI.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="WildernessLabs.Meadow.Template.0.8.0.nupkg">
+    <None Update="WildernessLabs.Meadow.Template.0.8.2.nupkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>
     <AddinReference Include="MonoDevelop.Debugger" />
     <AddinReference Include="MonoDevelop.Debugger.Soft" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Properties\AddinInfo.2022.cs" />
   </ItemGroup>
 </Project>
