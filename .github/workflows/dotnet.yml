@@ -86,5 +86,5 @@ jobs:
     - name: Upload mpack Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: Meadow.Mac.mpack.zip
+        name: Meadow.Mac.mpack.2022.zip
         path: 'main/VS4Mac_Meadow_Extension/bin/Release/net6.0/*.mpack'
