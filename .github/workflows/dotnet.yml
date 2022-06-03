@@ -37,6 +37,11 @@ jobs:
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1.0.5
 
+    - name: Work around so that VS2019 is picked up, instead of VS2022
+      run: |
+        mv "/Applications/Visual Studio.app" "/Applications/Visual Studio 2022.app"
+        mv "/Applications/Visual Studio 2019.app" "/Applications/Visual Studio.app"
+        
     - name: Restore dependencies
       run: msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj /t:Restore
 
