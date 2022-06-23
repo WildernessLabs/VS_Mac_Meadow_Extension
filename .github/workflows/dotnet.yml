@@ -44,7 +44,7 @@ jobs:
         mv "/Applications/Visual Studio 2019.app" "/Applications/Visual Studio.app"
 
     - name: Restore dependencies
-      run: msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj /t:Restore
+      run: msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj /t:Restore /p:Configuration=Release
 
     - name: Build VS4M Extension
       run: msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj /t:Build /p:Configuration=Release /p:CreatePackage=true
