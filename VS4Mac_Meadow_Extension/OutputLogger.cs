@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using MonoDevelop.Core;
 using MonoDevelop.Core.Execution;
+using MonoDevelop.Ide;
+using MonoDevelop.Ide.Gui.Pads;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -14,9 +17,16 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         {
             if (monitor == null)
             {
-                toolMonitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetToolOutputProgressMonitor(true);
-                monitor = MonoDevelop.Ide.IdeApp.Workbench.ProgressMonitors.GetOutputProgressMonitor("Meadow", IconId.Null, true, true, true);
+                toolMonitor = IdeApp.Workbench.ProgressMonitors.GetToolOutputProgressMonitor(true);
             }
+            else
+            {
+                monitor.Dispose();
+                monitor = null;
+            }
+
+            // Create/Recreate it
+            monitor = IdeApp.Workbench.ProgressMonitors.GetOutputProgressMonitor("Meadow", IconId.Null, true, true, true);
         }
 
         public IDisposable BeginScope<TState>(TState state) => default;
