@@ -22,6 +22,7 @@ jobs:
       with:
         repository: WildernessLabs/Meadow.CLI
         path: Meadow.CLI
+        ref: illinker-deploy
 
     - name: Set default Xamarin SDK versions
       run: |
@@ -51,7 +52,7 @@ jobs:
     - name: Upload mpack Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: Meadow.Mac.2019.mpack.zip
+        name: Meadow.Mac.2019.mpack
         path: 'main/VS4Mac_Meadow_Extension/bin/Release/net472/*.mpack'
 
   build-mac-2022:
@@ -68,6 +69,7 @@ jobs:
       with:
         repository: WildernessLabs/Meadow.CLI
         path: Meadow.CLI
+        ref: illinker-deploy
 
     - name: Set default Xamarin SDK versions
       run: |
@@ -91,5 +93,5 @@ jobs:
     - name: Upload mpack Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: Meadow.Mac.2022.mpack.zip
+        name: Meadow.Mac.2022.mpack
         path: 'main/VS4Mac_Meadow_Extension/bin/Release/net6.0/*.mpack'
