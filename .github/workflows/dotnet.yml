@@ -47,7 +47,7 @@ jobs:
       run: dotnet restore main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj
 
     - name: Build VS4M Extension
-      run: msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj /t:Build /p:Configuration=Release /p:CreatePackage=true
+      run: msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj /t:Build "/p:Configuration=Release x64" /p:CreatePackage=true
 
     - name: Upload mpack Artifacts
       uses: actions/upload-artifact@v2
@@ -88,7 +88,7 @@ jobs:
       run: dotnet msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.2022.csproj /t:Restore
 
     - name: Build VS4M-2022 Extension
-      run: dotnet msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.2022.csproj /t:Build /p:Configuration=Release /p:CreatePackage=true
+      run: dotnet msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.2022.csproj /t:Build "/p:Configuration=Release x64" /p:CreatePackage=true
 
     - name: Upload mpack Artifacts
       uses: actions/upload-artifact@v2
