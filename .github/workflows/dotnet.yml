@@ -40,6 +40,7 @@ jobs:
 
     - name: Buil and Package VS2019
       run: |
+        chmod +x build_package_2019.sh
         ./build_package_2019.sh
 
     - name: Upload mpack Artifacts
@@ -79,6 +80,7 @@ jobs:
 
     - name: Buil and Package VS2022
       run: |
+        chmod +x build_package_2022.sh
         ./build_package_2022.sh
 
     - name: Upload mpack Artifacts
