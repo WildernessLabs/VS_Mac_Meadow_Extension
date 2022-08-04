@@ -40,8 +40,9 @@ jobs:
 
     - name: Build and Package VS2019 Extension
       run: |
-        chmod +x main/build_package_2019.sh
-        main/build_package_2019.sh
+        cd main
+        chmod +x build_package_2019.sh
+        build_package_2019.sh
 
     - name: Upload mpack Artifacts
       uses: actions/upload-artifact@v2
@@ -80,8 +81,9 @@ jobs:
 
     - name: Build and Package VS2022 Extension
       run: |
-        chmod +x main/build_package_2022.sh
-        main/build_package_2022.sh
+        cd main
+        chmod +x build_package_2022.sh
+        build_package_2022.sh
 
     - name: Upload mpack Artifacts
       uses: actions/upload-artifact@v2
