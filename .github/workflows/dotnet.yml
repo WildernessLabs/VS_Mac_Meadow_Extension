@@ -38,10 +38,10 @@ jobs:
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1.0.5
 
-    - name: Buil and Package VS2019
+    - name: Build and Package VS2019 Extension
       run: |
-        chmod +x build_package_2019.sh
-        ./build_package_2019.sh
+        chmod +x main/build_package_2019.sh
+        main/build_package_2019.sh
 
     - name: Upload mpack Artifacts
       uses: actions/upload-artifact@v2
@@ -78,10 +78,10 @@ jobs:
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1.0.5
 
-    - name: Buil and Package VS2022
+    - name: Build and Package VS2022 Extension
       run: |
-        chmod +x build_package_2022.sh
-        ./build_package_2022.sh
+        chmod +x main/build_package_2022.sh
+        main/build_package_2022.sh
 
     - name: Upload mpack Artifacts
       uses: actions/upload-artifact@v2
