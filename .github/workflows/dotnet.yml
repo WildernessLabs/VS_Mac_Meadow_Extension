@@ -38,11 +38,18 @@ jobs:
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1.0.5
 
-    - name: Build and Package VS2019 Extension
+    - name: Rename VS so we pick up VS2019 IDE
       run: |
-        cd main
-        chmod +x build_package_2019.sh
-        build_package_2019.sh
+        mv "/Applications/Visual Studio.app" "/Applications/Visual Studio 2022.app"
+        mv "/Applications/Visual Studio 2019.app" "/Applications/Visual Studio.app"
+
+    - name: Restore our VS2019 project
+      run: |
+        msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj /t:Restore /p:Configuration=Release
+
+    - name: Build and Package the VS2019 Extension
+      run: |
+        msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj /t:Build /p:Configuration=Release /p:CreatePackage=true
 
     - name: Upload mpack Artifacts
       uses: actions/upload-artifact@v2
@@ -79,11 +86,13 @@ jobs:
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1.0.5
 
-    - name: Build and Package VS2022 Extension
+    - name: Restore our VS2022 project
       run: |
-        cd main
-        chmod +x build_package_2022.sh
-        build_package_2022.sh
+        msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.2022.csproj /t:Restore /p:Configuration=Release
+
+    - name: Build and Package the VS2019 Extension
+      run: |
+        msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.2022.csproj /t:Build /p:Configuration=Release /p:CreatePackage=true
 
     - name: Upload mpack Artifacts
       uses: actions/upload-artifact@v2
