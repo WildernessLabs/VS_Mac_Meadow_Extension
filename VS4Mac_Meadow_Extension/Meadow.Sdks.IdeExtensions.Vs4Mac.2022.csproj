@@ -4,9 +4,6 @@
     <OutputType>Library</OutputType>
     <IsAddin>True</IsAddin>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <Configurations>Debug;Release;Debug x64;Debug x86;Release x64;Release x86</Configurations>
-    <Platforms>AnyCPU;x86;x64</Platforms>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudioMac.Sdk" Version="17.0.0" />
