@@ -38,22 +38,15 @@ jobs:
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1.0.5
 
-    - name: Work around so that VS2019 is picked up.
+    - name: Buil and Package VS2019
       run: |
-        mv "/Applications/Visual Studio.app" "/Applications/Visual Studio 2022.app"
-        mv "/Applications/Visual Studio 2019.app" "/Applications/Visual Studio.app"
-
-    - name: Restore dependencies
-      run: dotnet restore main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj
-
-    - name: Build VS4M Extension
-      run: msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj /t:Build "/p:Configuration=Release x64" /p:CreatePackage=true
+        ./build_package_2019.sh
 
     - name: Upload mpack Artifacts
       uses: actions/upload-artifact@v2
       with:
         name: Meadow.Mac.2019.mpack
-        path: 'main/VS4Mac_Meadow_Extension/bin/Release x64/net472/*.mpack'
+        path: 'main/VS4Mac_Meadow_Extension/bin/Release/net472/*.mpack'
 
   build-mac-2022:
     runs-on: macos-12
@@ -84,14 +77,12 @@ jobs:
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1.0.5
 
-    - name: Restore dependencies
-      run: dotnet msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.2022.csproj /t:Restore
-
-    - name: Build VS4M-2022 Extension
-      run: dotnet msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.2022.csproj /t:Build "/p:Configuration=Release x64" /p:CreatePackage=true
+    - name: Buil and Package VS2022
+      run: |
+        ./build_package_2022.sh
 
     - name: Upload mpack Artifacts
       uses: actions/upload-artifact@v2
       with:
         name: Meadow.Mac.2022.mpack
-        path: 'main/VS4Mac_Meadow_Extension/bin/Release x64/net6.0/*.mpack'
+        path: 'main/VS4Mac_Meadow_Extension/bin/Release/net6.0/*.mpack'
