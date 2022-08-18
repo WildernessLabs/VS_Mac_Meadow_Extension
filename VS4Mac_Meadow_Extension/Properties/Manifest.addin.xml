@@ -3,10 +3,10 @@
     
     <Runtime>
         <Import file="WildernessLabs.Meadow.Template.0.8.2.nupkg" />
-        <Import file="Resources/illink.dll" />
-        <Import file="Resources/illink.runtimeconfig.json"/>
-        <Import file="Resources/meadow_link.xml"/>
-        <Import file="Resources/Mono.Cecil.dll"/>
+        <Import file="lib/illink.dll" />
+        <Import file="lib/illink.runtimeconfig.json"/>
+        <Import file="lib/meadow_link.xml"/>
+        <Import file="lib/Mono.Cecil.dll"/>
     </Runtime>
     
     <Extension path="/MonoDevelop/Ide/ProjectTemplateCategories">
