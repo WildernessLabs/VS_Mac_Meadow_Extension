@@ -17,11 +17,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
     public class MeadowExecutionCommand : ProcessExecutionCommand
     {
-        public MeadowExecutionCommand() :  base()
-        {
-            logger = new OutputLogger();
-        }
-
         // Adrian: Task because it's been assigned in a non-async method
         // i.e. it's a task to avoid awaiting the assignment (lazy but harmless)
         public Task<List<string>> ReferencedAssemblies { get; set; }
@@ -31,6 +26,11 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         OutputLogger logger;
         MeadowDeviceHelper meadow = null;
         DebuggingServer meadowDebugServer = null;
+
+        public MeadowExecutionCommand() :  base()
+        {
+            logger = new OutputLogger();
+        }
 
         public async Task DeployApp(int debugPort, CancellationToken cancellationToken)
         {
@@ -44,42 +44,47 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             meadow = new MeadowDeviceHelper(device, device.Logger);
 
-            //wrap this is a try/catch so it doesn't crash if the developer is offline
-            try
-            {
-                string osVersion = await meadow.GetOSVersion(TimeSpan.FromSeconds(30), cancellationToken)
-                    .ConfigureAwait(false);
+            var fileNameExe = System.IO.Path.Combine (OutputDirectory, "App.dll");
 
-                await new DownloadManager(logger).DownloadLatestAsync (osVersion)
-                    .ConfigureAwait (false);
+            if (meadow.DeviceAndAppVersionsMatch(fileNameExe))
+            {
+                //wrap this is a try/catch so it doesn't crash if the developer is offline
+                try {
+                    string osVersion = await meadow.GetOSVersion(TimeSpan.FromSeconds(30), cancellationToken)
+                        .ConfigureAwait(false);
+
+                    await new DownloadManager (logger).DownloadLatestAsync(osVersion)
+                        .ConfigureAwait(false);
+                }
+                catch
+                {
+                    Console.WriteLine("OS download failed, make sure you have an active internet connection");
+                }
+
+                var configuration = IdeApp.Workspace.ActiveConfiguration;
+
+                var isScs = configuration is SolutionConfigurationSelector;
+                var isDebug = (configuration as SolutionConfigurationSelector)?.Id == "Debug";
+
+                var includePdbs = (isScs && isDebug && debugPort > 1000);
+
+                await meadow.DeployAppAsync(fileNameExe, includePdbs, cancellationToken);
+
+                if (includePdbs)
+                {
+                    meadowDebugServer = await meadow.StartDebuggingSessionAsync(debugPort, cancellationToken);
+                }
+                else
+                {
+                    // sleep until cancel since this is a normal deploy without debug
+                    while (!cancellationToken.IsCancellationRequested)
+                        await Task.Delay(1000);
+
+                    Cleanup();
+                }
             }
-            catch
-            {
-                Console.WriteLine("OS download failed, make sure you have an active internet connection");
-            }
-
-            var fileNameExe = System.IO.Path.Combine(OutputDirectory, "App.dll");
-
-            var configuration = IdeApp.Workspace.ActiveConfiguration;
-
-            var isScs = configuration is SolutionConfigurationSelector;
-            var isDebug = (configuration as SolutionConfigurationSelector)?.Id == "Debug";
-
-            var includePdbs = (isScs && isDebug && debugPort > 1000);
-
-            await meadow.DeployAppAsync(fileNameExe, includePdbs, cancellationToken);
-
-            if (includePdbs)
-            {
-                meadowDebugServer = await meadow.StartDebuggingSessionAsync(debugPort, cancellationToken);
-            }
-            else
-            {
-                // sleep until cancel since this is a normal deploy without debug
-                while (!cancellationToken.IsCancellationRequested)
-                    await Task.Delay(1000);
-
-                Cleanup();
+            else {
+                return;
             }
         }
 
