@@ -44,9 +44,9 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             meadow = new MeadowDeviceHelper(device, device.Logger);
 
-            var fileNameExe = System.IO.Path.Combine (OutputDirectory, "App.dll");
+            var appPathDll = System.IO.Path.Combine (OutputDirectory, "App.dll");
 
-            if (meadow.DeviceAndAppVersionsMatch(fileNameExe))
+            if (meadow.DeviceAndAppVersionsMatch(appPathDll))
             {
                 //wrap this is a try/catch so it doesn't crash if the developer is offline
                 try {
@@ -68,7 +68,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
                 var includePdbs = (isScs && isDebug && debugPort > 1000);
 
-                await meadow.DeployAppAsync(fileNameExe, includePdbs, cancellationToken);
+                await meadow.DeployAppAsync(appPathDll, includePdbs, cancellationToken);
 
                 if (includePdbs)
                 {
