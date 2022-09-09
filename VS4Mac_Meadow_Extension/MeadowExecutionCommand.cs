@@ -12,6 +12,8 @@ using Meadow.CLI.Core;
 using Meadow.CLI.Core.DeviceManagement;
 using Meadow.CLI.Core.Devices;
 using Meadow.CLI.Core.Internals.MeadowCommunication.ReceiveClasses;
+using MonoDevelop.Ide;
+using MonoDevelop.Projects;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -94,11 +96,25 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             if (cleanedup)
                 return;
 
-            meadowDebugServer?.StopListeningAsync();
-            meadowDebugServer?.Dispose();
-            meadowDebugServer = null;
+            try {
+                meadowDebugServer?.StopListeningAsync();
+            } catch
+            {
+            }
 
-            meadow?.Dispose();
+            try {
+                meadowDebugServer?.Dispose();
+            }
+            finally {
+                meadowDebugServer = null;
+            }
+
+            try {
+                meadow?.Dispose();
+            }
+            finally {
+                meadow = null;
+            }
 
             if (!cleanedup)
                 _ = DeploymentTargetsManager.StartPollingForDevices();
