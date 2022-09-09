@@ -1,13 +1,17 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using MonoDevelop.Core.Execution;
-using MonoDevelop.Core;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
-using Meadow.CLI.Core.Devices;
-using Meadow.CLI.Core.DeviceManagement;
-using System;
-using Meadow.CLI.Core.Internals.MeadowCommunication.ReceiveClasses;
+using System.Threading.Tasks;
+
+using MonoDevelop.Core;
+using MonoDevelop.Core.Execution;
+using MonoDevelop.Ide;
+using MonoDevelop.Projects;
+
 using Meadow.CLI.Core;
+using Meadow.CLI.Core.DeviceManagement;
+using Meadow.CLI.Core.Devices;
+using Meadow.CLI.Core.Internals.MeadowCommunication.ReceiveClasses;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -56,11 +60,16 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             var fileNameExe = System.IO.Path.Combine(OutputDirectory, "App.dll");
 
-            var debug = debugPort > 1000;
+            var configuration = IdeApp.Workspace.ActiveConfiguration;
 
-            await meadow.DeployAppAsync(fileNameExe, debug, cancellationToken);
+            var isScs = configuration is SolutionConfigurationSelector;
+            var isDebug = (configuration as SolutionConfigurationSelector)?.Id == "Debug";
 
-            if (debug)
+            var includePdbs = (isScs && isDebug && debugPort > 1000);
+
+            await meadow.DeployAppAsync(fileNameExe, includePdbs, cancellationToken);
+
+            if (includePdbs)
             {
                 meadowDebugServer = await meadow.StartDebuggingSessionAsync(debugPort, cancellationToken);
             }
