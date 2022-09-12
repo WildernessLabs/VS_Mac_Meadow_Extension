@@ -22,7 +22,7 @@ jobs:
       with:
         repository: WildernessLabs/Meadow.CLI
         path: Meadow.CLI
-        ref: dominique-Fix212
+        ref: develop
 
     - name: Set default Xamarin SDK versions
       run: |
@@ -71,7 +71,7 @@ jobs:
       with:
         repository: WildernessLabs/Meadow.CLI
         path: Meadow.CLI
-        ref: dominique-Fix212
+        ref: develop
 
     - name: Set default Xamarin SDK versions
       run: |
