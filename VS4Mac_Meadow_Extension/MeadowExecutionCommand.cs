@@ -75,8 +75,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             {
                 // sleep until cancel since this is a normal deploy without debug
                 while (!cancellationToken.IsCancellationRequested)
-                    await Task.Delay(1000, cancellationToken)
-                        .ConfigureAwait(false);
+                    await Task.Delay(1000, cancellationToken);
 
                 Cleanup();
             }
