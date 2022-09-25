@@ -40,7 +40,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             meadow?.Dispose();
 
             var target = this.Target as MeadowDeviceExecutionTarget;
-            var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Port, logger: logger);
+            var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Port, logger: logger)
+                .ConfigureAwait(false);
 
             meadow = new MeadowDeviceHelper(device, device.Logger);
 
@@ -62,22 +63,24 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             var configuration = IdeApp.Workspace.ActiveConfiguration;
 
-            var isScs = configuration is SolutionConfigurationSelector;
-            var isDebug = (configuration as SolutionConfigurationSelector)?.Id == "Debug";
+            bool includePdbs = configuration is SolutionConfigurationSelector isScs
+                && isScs?.Id == "Debug"
+                && debugPort > 1000;
 
-            var includePdbs = (isScs && isDebug && debugPort > 1000);
-
-            await meadow.DeployAppAsync(fileNameExe, includePdbs, cancellationToken);
+            await meadow.DeployAppAsync(fileNameExe, includePdbs, cancellationToken)
+                .ConfigureAwait (false); ;
 
             if (includePdbs)
             {
-                meadowDebugServer = await meadow.StartDebuggingSessionAsync(debugPort, cancellationToken);
+                meadowDebugServer = await meadow.StartDebuggingSessionAsync(debugPort, cancellationToken)
+                    .ConfigureAwait(false);
             }
             else
             {
                 // sleep until cancel since this is a normal deploy without debug
                 while (!cancellationToken.IsCancellationRequested)
-                    await Task.Delay(1000);
+                    await Task.Delay(1000, cancellationToken)
+                        .ConfigureAwait(false);
 
                 Cleanup();
             }
@@ -89,7 +92,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             if (cleanedup)
                 return;
 
-            meadowDebugServer?.StopListeningAsync();
+            _ = meadowDebugServer?.StopListeningAsync();
             meadowDebugServer?.Dispose();
             meadowDebugServer = null;
 
