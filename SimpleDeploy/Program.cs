@@ -45,7 +45,7 @@ namespace SimpleDeploy
 
             try
             {
-                meadow = await MeadowDeviceManager.GetMeadowForSerialPort(SerialPortName, logger: logger).ConfigureAwait(false);
+                meadow = await MeadowDeviceManager.GetMeadowForSerialPort(SerialPortName, logger: logger);
 
                 var meadowDH = new MeadowDeviceHelper(meadow, logger);
 

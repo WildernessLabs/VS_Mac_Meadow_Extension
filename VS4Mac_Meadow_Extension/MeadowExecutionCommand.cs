@@ -47,11 +47,9 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             //wrap this is a try/catch so it doesn't crash if the developer is offline
             try
             {
-                string osVersion = await meadow.GetOSVersion(TimeSpan.FromSeconds(30), cancellationToken)
-                    .ConfigureAwait(false);
+                string osVersion = await meadow.GetOSVersion(TimeSpan.FromSeconds(30), cancellationToken);
 
-                await new DownloadManager(logger).DownloadOsBinaries(osVersion)
-                    .ConfigureAwait (false);
+                await new DownloadManager(logger).DownloadOsBinaries(osVersion);
             }
             catch
             {
