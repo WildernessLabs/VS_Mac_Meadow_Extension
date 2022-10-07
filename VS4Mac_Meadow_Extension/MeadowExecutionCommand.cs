@@ -47,11 +47,9 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             //wrap this is a try/catch so it doesn't crash if the developer is offline
             try
             {
-                string osVersion = await meadow.GetOSVersion(TimeSpan.FromSeconds(30), cancellationToken)
-                    .ConfigureAwait(false);
+                string osVersion = await meadow.GetOSVersion(TimeSpan.FromSeconds(30), cancellationToken);
 
-                await new DownloadManager(logger).DownloadLatestAsync (osVersion)
-                    .ConfigureAwait (false);
+                await new DownloadManager(logger).DownloadOsBinaries(osVersion);
             }
             catch
             {
@@ -67,11 +65,11 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             var includePdbs = (isScs && isDebug && debugPort > 1000);
 
-            await meadow.DeployAppAsync(fileNameExe, includePdbs, cancellationToken);
+            await meadow.DeployApp(fileNameExe, includePdbs, cancellationToken);
 
             if (includePdbs)
             {
-                meadowDebugServer = await meadow.StartDebuggingSessionAsync(debugPort, cancellationToken);
+                meadowDebugServer = await meadow.StartDebuggingSession(debugPort, cancellationToken);
             }
             else
             {
@@ -89,7 +87,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             if (cleanedup)
                 return;
 
-            meadowDebugServer?.StopListeningAsync();
+            meadowDebugServer?.StopListening();
             meadowDebugServer?.Dispose();
             meadowDebugServer = null;
 
