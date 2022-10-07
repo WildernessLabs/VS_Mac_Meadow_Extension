@@ -49,11 +49,11 @@ namespace SimpleDeploy
 
                 var meadowDH = new MeadowDeviceHelper(meadow, logger);
 
-                await meadowDH.MonoDisableAsync(false, cts.Token);
+                await meadowDH.MonoDisable(false, cts.Token);
 
                 //meadowDH.DeployAppAsync();
 
-                var items = await meadowDH.GetFilesAndFoldersAsync(new TimeSpan(0, 0, 10), cts.Token);
+                var items = await meadowDH.GetFilesAndFolders(new TimeSpan(0, 0, 10), cts.Token);
 
                 bool isRoot = false;
                 bool isFolder = false;
@@ -100,7 +100,7 @@ namespace SimpleDeploy
                     }
 
                     Console.WriteLine($"Deleting {item}");
-                    await meadow.DeleteFileAsync(item, 0, cts.Token);
+                    await meadow.DeleteFile(item, 0, cts.Token);
                 }
 
                 
