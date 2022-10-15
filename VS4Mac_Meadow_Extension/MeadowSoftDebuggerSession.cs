@@ -36,6 +36,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             catch(Exception ex)
             {
                 Console.WriteLine ($"OnRun() Error: {ex.Message}{Environment.NewLine}Stack Trace:{Environment.NewLine}{ex.StackTrace}" );
+                CleanUp();
             }
         }
 
