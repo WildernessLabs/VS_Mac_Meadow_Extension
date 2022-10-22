@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Meadow.CLI.Core.DeviceManagement;
@@ -29,24 +30,28 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 var port = connectArgs?.DebugPort ?? 0;
 
                 await meadowStartInfo.ExecutionCommand.DeployApp(port, debugCancelTokenSource.Token);
-            }
 
-            catch (Exception ex)
+                base.OnRun(startInfo);
+            }
+            catch(Exception ex)
             {
-                Console.WriteLine("Deploy error: " + ex.Message);
+                Console.WriteLine ($"OnRun() Error: {ex.Message}{Environment.NewLine}Stack Trace:{Environment.NewLine}{ex.StackTrace}" );
+                CleanUp();
             }
-
-            base.OnRun(startInfo);
         }
 
         protected override void OnExit()
         {
-            CleanUp();
-
             try
             {
+                CleanUp();
+
                 base.OnExit();
-            } catch { }
+            }
+            catch(Exception ex)
+            {
+                Debug.WriteLine ($"OnExit() Error: {ex.Message}{Environment.NewLine}Stack Trace:{Environment.NewLine}{ex.StackTrace}");
+            }
         }
 
         void CleanUp()

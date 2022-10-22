@@ -40,7 +40,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             meadow?.Dispose();
 
             var target = this.Target as MeadowDeviceExecutionTarget;
-            var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Port, logger: logger);
+            var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Port, logger: logger)
+                .ConfigureAwait(false);
 
             meadow = new MeadowDeviceHelper(device, device.Logger);
 
@@ -60,10 +61,9 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             var configuration = IdeApp.Workspace.ActiveConfiguration;
 
-            var isScs = configuration is SolutionConfigurationSelector;
-            var isDebug = (configuration as SolutionConfigurationSelector)?.Id == "Debug";
-
-            var includePdbs = (isScs && isDebug && debugPort > 1000);
+            bool includePdbs = configuration is SolutionConfigurationSelector isScs
+                && isScs?.Id == "Debug"
+                && debugPort > 1000;
 
             await meadow.DeployApp(fileNameExe, includePdbs, cancellationToken);
 
@@ -75,7 +75,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             {
                 // sleep until cancel since this is a normal deploy without debug
                 while (!cancellationToken.IsCancellationRequested)
-                    await Task.Delay(1000);
+                    await Task.Delay(1000, cancellationToken);
 
                 Cleanup();
             }
