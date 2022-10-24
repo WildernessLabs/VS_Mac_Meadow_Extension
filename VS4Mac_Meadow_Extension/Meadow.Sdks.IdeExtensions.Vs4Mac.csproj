@@ -11,7 +11,7 @@
     <ProjectReference Include="..\..\Meadow.CLI\Meadow.CLI.Core\Meadow.CLI.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="WildernessLabs.Meadow.Template.0.8.2.nupkg">
+    <None Update="WildernessLabs.Meadow.Template.0.9.0.nupkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

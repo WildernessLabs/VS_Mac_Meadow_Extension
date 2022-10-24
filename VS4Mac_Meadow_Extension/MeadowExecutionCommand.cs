@@ -1,13 +1,17 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using MonoDevelop.Core.Execution;
-using MonoDevelop.Core;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
-using Meadow.CLI.Core.Devices;
-using Meadow.CLI.Core.DeviceManagement;
-using System;
-using Meadow.CLI.Core.Internals.MeadowCommunication.ReceiveClasses;
+using System.Threading.Tasks;
+
+using MonoDevelop.Core;
+using MonoDevelop.Core.Execution;
+using MonoDevelop.Ide;
+using MonoDevelop.Projects;
+
 using Meadow.CLI.Core;
+using Meadow.CLI.Core.DeviceManagement;
+using Meadow.CLI.Core.Devices;
+using Meadow.CLI.Core.Internals.MeadowCommunication.ReceiveClasses;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -36,18 +40,17 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             meadow?.Dispose();
 
             var target = this.Target as MeadowDeviceExecutionTarget;
-            var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Port, logger: logger);
+            var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Port, logger: logger)
+                .ConfigureAwait(false);
 
             meadow = new MeadowDeviceHelper(device, device.Logger);
 
             //wrap this is a try/catch so it doesn't crash if the developer is offline
             try
             {
-                string osVersion = await meadow.GetOSVersion(TimeSpan.FromSeconds(30), cancellationToken)
-                    .ConfigureAwait(false);
+                string osVersion = await meadow.GetOSVersion(TimeSpan.FromSeconds(30), cancellationToken);
 
-                await new DownloadManager(logger).DownloadLatestAsync (osVersion)
-                    .ConfigureAwait (false);
+                await new DownloadManager(logger).DownloadOsBinaries(osVersion);
             }
             catch
             {
@@ -56,19 +59,23 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             var fileNameExe = System.IO.Path.Combine(OutputDirectory, "App.dll");
 
-            var debug = debugPort > 1000;
+            var configuration = IdeApp.Workspace.ActiveConfiguration;
 
-            await meadow.DeployAppAsync(fileNameExe, debug, cancellationToken);
+            bool includePdbs = configuration is SolutionConfigurationSelector isScs
+                && isScs?.Id == "Debug"
+                && debugPort > 1000;
 
-            if (debug)
+            await meadow.DeployApp(fileNameExe, includePdbs, cancellationToken);
+
+            if (includePdbs)
             {
-                meadowDebugServer = await meadow.StartDebuggingSessionAsync(debugPort, cancellationToken);
+                meadowDebugServer = await meadow.StartDebuggingSession(debugPort, cancellationToken);
             }
             else
             {
                 // sleep until cancel since this is a normal deploy without debug
                 while (!cancellationToken.IsCancellationRequested)
-                    await Task.Delay(1000);
+                    await Task.Delay(1000, cancellationToken);
 
                 Cleanup();
             }
@@ -80,7 +87,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             if (cleanedup)
                 return;
 
-            meadowDebugServer?.StopListeningAsync();
+            meadowDebugServer?.StopListening();
             meadowDebugServer?.Dispose();
             meadowDebugServer = null;
 

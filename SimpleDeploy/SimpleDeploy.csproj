@@ -2,7 +2,11 @@
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <OutputType>Exe</OutputType>
+    <Configurations>Debug;Release;Debug x64;Debug x86;Release x64;Release x86</Configurations>
+    <Platforms>AnyCPU;x86;x64</Platforms>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
     <ProjectReference Include="..\..\Meadow.CLI\Meadow.CLI.Core\Meadow.CLI.Core.csproj" />
   </ItemGroup>

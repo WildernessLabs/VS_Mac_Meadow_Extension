@@ -13,6 +13,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
     [ExportProjectModelExtension, AppliesTo("Meadow")]
     public class MeadowProject : DotNetProjectExtension
     {
+        const string MeadowSdkProject = "Meadow.Sdk/1.1.0";
+
         // Note: see https://github.com/mhutch/MonoDevelop.AddinMaker/blob/eff386bfcce05918dbcfe190e9c2ed8513fe92ff/MonoDevelop.AddinMaker/AddinProjectFlavor.cs#L16 for better implementation 
 
         // Called after the project finishes loading
@@ -22,11 +24,10 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             Console.WriteLine("WLABS: OnEndLoad");
 
-            // if the project is not a library
-            // shouldn't this test if it's an executable?
-            if (Project.CompileTarget != CompileTarget.Library)
+            // Check that the project is a library, so we can start listening for attached/detached devices.
+            if (Project.CompileTarget == CompileTarget.Library)
             {
-                Console.WriteLine("WLABS: Not a lib");
+                Console.WriteLine("WLABS: IS a lib");
 
                 DeploymentTargetsManager.DeviceListChanged += OnExecutionTargetsChanged;
                 DeploymentTargetsManager.StartPollingForDevices();
@@ -41,7 +42,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         public override void Dispose()
         {
             base.Dispose();
-            // stop listening
+            // stop listening for for attached/detached devices.
             DeploymentTargetsManager.DeviceListChanged -= OnExecutionTargetsChanged;
             DeploymentTargetsManager.StopPollingForDevices();
         }
@@ -81,11 +82,13 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             ConfigurationSelector configuration,
             SolutionItemRunConfiguration runConfiguration)
         {
+            var isMeadowMeadowDeviceExecutionTarget = context.ExecutionTarget is MeadowDeviceExecutionTarget;
             // find the selected solution's startup project
-            if (IdeApp.Workspace.GetAllSolutions().Any((s) => s.StartupItem == this.Project))
+            if (IdeApp.Workspace.GetAllSolutions().Any((s) => s.StartupItem == this.Project)
+                && isMeadowMeadowDeviceExecutionTarget
+                && IsMeadowSdkProject())
             {
-                // if the selection execution target is a meadow device, and the project is an executable.
-                return context.ExecutionTarget is MeadowDeviceExecutionTarget && base.OnGetCanExecute(context, configuration, runConfiguration);
+                return true;
             }
 
             return base.OnGetCanExecute(context, configuration, runConfiguration);
@@ -121,6 +124,19 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 OutputDirectory = configuration.OutputDirectory,
                 ReferencedAssemblies = references
             };
+        }
+
+        protected override ProjectFeatures OnGetSupportedFeatures ()
+        {
+            var features = base.OnGetSupportedFeatures ();
+            if (IsMeadowSdkProject ())
+                features |= ProjectFeatures.Execute;
+            return features;
+        }
+
+        private bool IsMeadowSdkProject ()
+        {
+            return this.Project.MSBuildProject.GetReferencedSDKs ().Any ((s) => s == MeadowSdkProject);
         }
     }
 }
