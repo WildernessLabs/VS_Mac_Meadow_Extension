@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleDeploy", "SimpleDeplo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.Sdks.IdeExtensions.Vs4Mac.2022", "VS4Mac_Meadow_Extension\Meadow.Sdks.IdeExtensions.Vs4Mac.2022.csproj", "{596A5F6C-A65D-4050-949A-AF032F2EDCC8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.Hcom", "..\Meadow.CLI\Meadow.Hcom\Meadow.Hcom.csproj", "{5478B7C2-A653-4963-B1A1-4620DDE9453C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,8 +31,13 @@ Global
 		{596A5F6C-A65D-4050-949A-AF032F2EDCC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{596A5F6C-A65D-4050-949A-AF032F2EDCC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{596A5F6C-A65D-4050-949A-AF032F2EDCC8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5478B7C2-A653-4963-B1A1-4620DDE9453C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5478B7C2-A653-4963-B1A1-4620DDE9453C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5478B7C2-A653-4963-B1A1-4620DDE9453C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5478B7C2-A653-4963-B1A1-4620DDE9453C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{00F05278-9F3F-40B0-B377-64E26B028888} = {C173D4A6-157A-4E40-AB96-C4A7BB8499DE}
+		{5478B7C2-A653-4963-B1A1-4620DDE9453C} = {C173D4A6-157A-4E40-AB96-C4A7BB8499DE}
 	EndGlobalSection
 EndGlobal
