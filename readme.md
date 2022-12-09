@@ -20,7 +20,7 @@ To install the add-in:
 
  1. Install the latest version of [Visual Studio for Mac](https://visualstudio.microsoft.com/downloads/).
  2. Install the **AddinMaker** maker from the extensions/add-ins manager (follow installation instructions above and search for `AddinMaker` instead).
- 3. Clone the **Meadow.CLI** project from [GitHub](https://github.com/WildernessLabs/Meadow.CLI)
+ 3. Clone the **Meadow.CLI** project from [GitHub](https://github.com/WildernessLabs/Meadow.CLI).
  4. Clone the **VS_Mac_Meadow_Extension** project from [GitHub](https://github.com/WildernessLabs/VS_Mac_Meadow_Extension)
  5. Open `VS4Mac_Meadow_Extension.sln` solution with VS Mac.
  6. Make sure all the nuget packages are restored and then start debugging, which will open a new instance of VS Mac that has the Add-in that just built enabled.
