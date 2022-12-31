@@ -7,7 +7,6 @@ namespace SimpleDeploy
     {
         public OutputLogger()
         {
-           
         }
 
         public IDisposable BeginScope<TState>(TState state) => default;
