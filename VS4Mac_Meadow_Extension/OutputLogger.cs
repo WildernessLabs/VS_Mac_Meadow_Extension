@@ -40,13 +40,15 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             var msg = formatter(state, exception);
 
-            if(msg.Contains("StdOut"))
+            if (msg.Contains("StdOut") || msg.Contains("StdInfo"))
             {
+                // This appears in the "Meadow" tab
                 monitor?.Log.WriteLine(msg.Substring(15));
             }
             else
             {
-                toolMonitor?.Log.WriteLine(msg);
+                // This appears in the "Tools Output" tab
+                toolMonitor?.Log.Write(msg);
             }
         }
     }
