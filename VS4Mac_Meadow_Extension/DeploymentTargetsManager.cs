@@ -43,7 +43,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         public static void StopPollingForDevices()
         {
-            cts.Cancel();
+            cts?.Cancel();
         }
 
         //Experiemental use of ioreg to find serial ports for connected Meadow devices
