@@ -5,13 +5,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Externals", "Externals", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C33F0F2D-7C89-4E21-B399-29097966FF19}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.CLI.Core", "..\Meadow.CLI\Meadow.CLI.Core\Meadow.CLI.Core.csproj", "{00F05278-9F3F-40B0-B377-64E26B028888}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleDeploy", "SimpleDeploy\SimpleDeploy.csproj", "{8D2440C8-A1CD-47AA-B466-15CDD138D29B}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.Sdks.IdeExtensions.Vs4Mac.2022", "VS4Mac_Meadow_Extension\Meadow.Sdks.IdeExtensions.Vs4Mac.2022.csproj", "{596A5F6C-A65D-4050-949A-AF032F2EDCC8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.Hcom", "..\Meadow.CLI\Meadow.Hcom\Meadow.Hcom.csproj", "{5478B7C2-A653-4963-B1A1-4620DDE9453C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.Hcom.6.0.0", "..\Meadow.CLI\Meadow.Hcom\Meadow.Hcom.6.0.0.csproj", "{E6B61D23-9EF0-41A7-88F5-EF017D18870E}"
+EndProject
+Project("{9344BDBB-3E7F-41FC-A0DD-8665D75EE146}") = "SimpleDeploy", "SimpleDeploy\SimpleDeploy.csproj", "{AD522E73-09AF-49C0-A065-56FD8A9DD4BC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.CLI.Core.6.0.0", "..\Meadow.CLI\Meadow.CLI.Core\Meadow.CLI.Core.6.0.0.csproj", "{EA013C8B-D46E-4E17-9595-570BF9C5CFA5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,25 +19,25 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{00F05278-9F3F-40B0-B377-64E26B028888}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{00F05278-9F3F-40B0-B377-64E26B028888}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{00F05278-9F3F-40B0-B377-64E26B028888}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{00F05278-9F3F-40B0-B377-64E26B028888}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8D2440C8-A1CD-47AA-B466-15CDD138D29B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8D2440C8-A1CD-47AA-B466-15CDD138D29B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8D2440C8-A1CD-47AA-B466-15CDD138D29B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8D2440C8-A1CD-47AA-B466-15CDD138D29B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{596A5F6C-A65D-4050-949A-AF032F2EDCC8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{596A5F6C-A65D-4050-949A-AF032F2EDCC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{596A5F6C-A65D-4050-949A-AF032F2EDCC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{596A5F6C-A65D-4050-949A-AF032F2EDCC8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5478B7C2-A653-4963-B1A1-4620DDE9453C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5478B7C2-A653-4963-B1A1-4620DDE9453C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5478B7C2-A653-4963-B1A1-4620DDE9453C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5478B7C2-A653-4963-B1A1-4620DDE9453C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6B61D23-9EF0-41A7-88F5-EF017D18870E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6B61D23-9EF0-41A7-88F5-EF017D18870E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6B61D23-9EF0-41A7-88F5-EF017D18870E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6B61D23-9EF0-41A7-88F5-EF017D18870E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD522E73-09AF-49C0-A065-56FD8A9DD4BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD522E73-09AF-49C0-A065-56FD8A9DD4BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD522E73-09AF-49C0-A065-56FD8A9DD4BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD522E73-09AF-49C0-A065-56FD8A9DD4BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA013C8B-D46E-4E17-9595-570BF9C5CFA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA013C8B-D46E-4E17-9595-570BF9C5CFA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA013C8B-D46E-4E17-9595-570BF9C5CFA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA013C8B-D46E-4E17-9595-570BF9C5CFA5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{00F05278-9F3F-40B0-B377-64E26B028888} = {C173D4A6-157A-4E40-AB96-C4A7BB8499DE}
-		{5478B7C2-A653-4963-B1A1-4620DDE9453C} = {C173D4A6-157A-4E40-AB96-C4A7BB8499DE}
+		{E6B61D23-9EF0-41A7-88F5-EF017D18870E} = {C173D4A6-157A-4E40-AB96-C4A7BB8499DE}
+		{EA013C8B-D46E-4E17-9595-570BF9C5CFA5} = {C173D4A6-157A-4E40-AB96-C4A7BB8499DE}
 	EndGlobalSection
 EndGlobal

@@ -11,10 +11,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Meadow.CLI\Meadow.CLI.Core\Meadow.CLI.Core.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="WildernessLabs.Meadow.Template.0.9.6.nupkg">
+    <None Update="WildernessLabs.Meadow.Template.0.9.8.nupkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
@@ -24,5 +21,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Properties\AddinInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Meadow.CLI\Meadow.CLI.Core\Meadow.CLI.Core.6.0.0.csproj" />
   </ItemGroup>
 </Project>
