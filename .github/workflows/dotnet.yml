@@ -7,7 +7,7 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  build-mac:
+  build-mac-2019:
 
     runs-on: macos-11
 
