@@ -32,6 +32,11 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         MeadowDeviceHelper meadow = null;
         DebuggingServer meadowDebugServer = null;
 
+        static ProgressMonitor statusMonitor;
+        const int TOTAL_PROGRESS = 100;
+        int nextProgress = 0;
+        const int PROGRESS_INCREMENT = 5;
+
         public async Task DeployApp(int debugPort, CancellationToken cancellationToken)
         {
             DeploymentTargetsManager.StopPollingForDevices();
@@ -65,6 +70,11 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 && isScs?.Id == "Debug"
                 && debugPort > 1000;
 
+            if (meadow is MeadowLocalDevice mld)
+            {
+                mld.MeadowProgress.ProgressChanged += MeadowProgress_ProgressChanged;
+            }
+
             await meadow.DeployApp(fileNameExe, includePdbs, cancellationToken);
 
             if (includePdbs)
@@ -79,6 +89,32 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
                 Cleanup();
             }
+        }
+
+        private void MeadowProgress_ProgressChanged(object sender, CLI.Core.Progress.ProgressEventArgs e)
+        {
+            // updateon UI thread.
+            Runtime.RunInMainThread(() =>
+            {
+                if (statusMonitor is null)
+                    statusMonitor = IdeApp.Workbench.ProgressMonitors.GetStatusProgressMonitor("File Transferring", IconId.Null, false);
+
+                if (e.Value == 0)
+                {
+                    statusMonitor?.BeginTask("File Transferrring", TOTAL_PROGRESS);
+                    nextProgress = 0;
+                }
+                else if (e.Value > 0 && e.Value < TOTAL_PROGRESS)
+                {
+                    statusMonitor?.Step(nextProgress);
+                    nextProgress += PROGRESS_INCREMENT;
+                }
+                else if (e.Value >= TOTAL_PROGRESS)
+                {
+                    statusMonitor.EndTask();
+                    nextProgress = 0;
+                }
+            });
         }
 
         bool cleanedup = true;
