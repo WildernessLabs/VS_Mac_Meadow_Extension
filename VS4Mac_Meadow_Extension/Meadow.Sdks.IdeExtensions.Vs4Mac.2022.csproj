@@ -11,7 +11,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="WildernessLabs.Meadow.Template.0.9.8.nupkg">
+    <None Update="WildernessLabs.Meadow.Template.1.0.1.nupkg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
