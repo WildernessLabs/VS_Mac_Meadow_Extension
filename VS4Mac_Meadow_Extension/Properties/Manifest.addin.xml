@@ -2,7 +2,7 @@
 <ExtensionModel>
     
     <Runtime>
-        <Import file="WildernessLabs.Meadow.Template.1.0.1.1.nupkg" />
+        <Import file="WildernessLabs.Meadow.Template.1.0.1.2.nupkg" />
         <Import file="lib/illink.dll" />
         <Import file="lib/illink.runtimeconfig.json"/>
         <Import file="lib/meadow_link.xml"/>
@@ -29,7 +29,7 @@
             templateId="WildernessLabs.Meadow.Templates.BasicApp"
             _overrideName="Meadow Application"
             _overrideDescription="Creates a new Meadow project."
-            path="WildernessLabs.Meadow.Template.1.0.1.1.nupkg"
+            path="WildernessLabs.Meadow.Template.1.0.1.2.nupkg"
             category="meadow/app/general"
             />
         <Template
@@ -37,7 +37,7 @@
             templateId="WildernessLabs.Meadow.Templates.BasicApp.FSharp"
             _overrideName="Meadow Application"
             _overrideDescription="Creates a new Meadow project."
-            path="WildernessLabs.Meadow.Template.1.0.1.1.nupkg"
+            path="WildernessLabs.Meadow.Template.1.0.1.2.nupkg"
             category="meadow/app/general"
             />
         <Template
@@ -45,7 +45,7 @@
             templateId="WildernessLabs.Meadow.Templates.BasicApp.VBNet"
             _overrideName="Meadow Application"
             _overrideDescription="Creates a new Meadow project."
-            path="WildernessLabs.Meadow.Template.1.0.1.1.nupkg"
+            path="WildernessLabs.Meadow.Template.1.0.1.2.nupkg"
             category="meadow/app/general"
             />
         
@@ -54,7 +54,7 @@
             templateId="WildernessLabs.Meadow.Templates.Library"
             _overrideName="Meadow Library"
             _overrideDescription="Creates a new Meadow library."
-            path="WildernessLabs.Meadow.Template.1.0.1.1.nupkg"
+            path="WildernessLabs.Meadow.Template.1.0.1.2.nupkg"
             category="meadow/library/general"
             />
         <Template
@@ -62,7 +62,7 @@
             templateId="WildernessLabs.Meadow.Templates.Library.FSharp"
             _overrideName="Meadow Library"
             _overrideDescription="Creates a new Meadow library."
-            path="WildernessLabs.Meadow.Template.1.0.1.1.nupkg"
+            path="WildernessLabs.Meadow.Template.1.0.1.2.nupkg"
             category="meadow/library/general"
             />
         <Template
@@ -70,7 +70,7 @@
             templateId="WildernessLabs.Meadow.Templates.Library.VBNet"
             _overrideName="Meadow Library"
             _overrideDescription="Creates a new Meadow library."
-            path="WildernessLabs.Meadow.Template.1.0.1.1.nupkg"
+            path="WildernessLabs.Meadow.Template.1.0.1.2.nupkg"
             category="meadow/library/general"
             />
     </Extension>
