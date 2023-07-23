@@ -1,10 +1,18 @@
 name: VS4Mac Extension
+env:
+  IDE_TOOLS_RELEASE_VERSION: 1.1.2
+  MEADOW_OS_VERSION: 1.1.0.0
+  VS_MAC_2019_VERSION: 8.10
+  VS_MAC_2022_VERSION: 17.5
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+
+# Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   build-mac-2019:
@@ -43,6 +51,11 @@ jobs:
         mv "/Applications/Visual Studio.app" "/Applications/Visual Studio 2022.app"
         mv "/Applications/Visual Studio 2019.app" "/Applications/Visual Studio.app"
 
+    - if: ${{ github.event_name == 'workflow_dispatch' }}
+      name: Update VS2019 Version Numbers
+      run: |
+        sed -i "" "s/Version = \"1.*\"/Version = \"${{ENV.IDE_TOOLS_RELEASE_VERSION}}\"/" vs-mac/VS4Mac_Meadow_Extension/Properties/AddinInfo.cs
+
     - name: Restore our VS2019 project
       run: |
         msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj /t:Restore /p:Configuration=Release
@@ -54,7 +67,7 @@ jobs:
     - name: Upload mpack Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: Meadow.Mac.2019.mpack
+        name: Meadow.Mac.2019.mpack.${{ ENV.IDE_TOOLS_RELEASE_VERSION }}
         path: 'main/VS4Mac_Meadow_Extension/bin/Release/net472/*.mpack'
 
   build-mac-2022:
@@ -86,6 +99,11 @@ jobs:
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1.0.5
 
+    - if: ${{ github.event_name == 'workflow_dispatch' }}
+      name: Update VS2022 Version Numbers
+      run: |
+        sed -i "" "s/Version = \"1.*\"/Version = \"${{ ENV.IDE_TOOLS_RELEASE_VERSION }}\"/" vs-mac/VS4Mac_Meadow_Extension/Properties/AddinInfo.2022.cs
+
     - name: Restore our VS2022 project
       run: |
         dotnet msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.2022.csproj /t:Restore /p:Configuration=Release
@@ -97,5 +115,47 @@ jobs:
     - name: Upload mpack Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: Meadow.Mac.2022.mpack
+        name: Meadow.Mac.2022.mpack.${{ ENV.IDE_TOOLS_RELEASE_VERSION }}
         path: 'main/VS4Mac_Meadow_Extension/bin/Release/net7.0/*.mpack'
+
+    - if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
+      name: Get Commit Messages
+      id: commit_messages
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.MEADOW_MAC_TOKEN }}
+        script: |
+          const { owner, repo } = context.repo;
+
+          const latestRelease = await github.rest.repos.getLatestRelease({
+            owner: 'WildernessLabs',
+            repo: 'VS_Mac_Meadow_Extension',
+          });
+
+          const commits = await github.rest.repos.listCommits({
+            owner: 'WildernessLabs',
+            repo: 'VS_Mac_Meadow_Extension',
+            since: latestRelease.created_at
+          });
+
+          const messages = commits.data.map(commit => `* ${commit.commit.message}`).join('  \n');
+          const formattedMessages = `## What's Changed  \n${messages}`;
+          
+          return formattedMessages;
+  
+    - if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
+      name: Create VS2022 Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.MEADOW_MAC_TOKEN }}
+      with:
+        owner: WildernessLabs
+        repo: VS_Mac_Meadow_Extension
+        tag_name: v${{ ENV.IDE_TOOLS_RELEASE_VERSION }}-vsm${{ ENV.VS_MAC_2022_VERSION }}
+        release_name: VS Mac VS2022 Extension v${{ ENV.IDE_TOOLS_RELEASE_VERSION }} for Meadow OS v${{ ENV.MEADOW_OS_VERSION }}
+        body: | 
+          ${{ steps.commit_messages.outputs.result }}
+        draft: true
+        prerelease: false
+        commitish: main
