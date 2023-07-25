@@ -54,7 +54,7 @@ jobs:
     - if: ${{ github.event_name == 'workflow_dispatch' }}
       name: Update VS2019 Version Numbers
       run: |
-        sed -i "" "s/Version = \"1.*\"/Version = \"${{ENV.IDE_TOOLS_RELEASE_VERSION}}\"/" vs-mac/VS4Mac_Meadow_Extension/Properties/AddinInfo.cs
+        sed -i "" "s/Version = \"1.*\"/Version = \"${{ENV.IDE_TOOLS_RELEASE_VERSION}}\"/" main/VS4Mac_Meadow_Extension/Properties/AddinInfo.cs
 
     - name: Restore our VS2019 project
       run: |
@@ -102,7 +102,7 @@ jobs:
     - if: ${{ github.event_name == 'workflow_dispatch' }}
       name: Update VS2022 Version Numbers
       run: |
-        sed -i "" "s/Version = \"1.*\"/Version = \"${{ ENV.IDE_TOOLS_RELEASE_VERSION }}\"/" vs-mac/VS4Mac_Meadow_Extension/Properties/AddinInfo.2022.cs
+        sed -i "" "s/Version = \"1.*\"/Version = \"${{ ENV.IDE_TOOLS_RELEASE_VERSION }}\"/" main/VS4Mac_Meadow_Extension/Properties/AddinInfo.2022.cs
 
     - name: Restore our VS2022 project
       run: |
