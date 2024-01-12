@@ -61,13 +61,14 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             var configuration = IdeApp.Workspace.ActiveConfiguration;
 
-            bool includePdbs = configuration is SolutionConfigurationSelector isScs
+            bool isDebugging = configuration is SolutionConfigurationSelector isScs
                 && isScs?.Id == "Debug"
                 && debugPort > 1000;
 
+            var includePdbs = false;
             await meadow.DeployApp(fileNameExe, includePdbs, cancellationToken);
 
-            if (includePdbs)
+            if (isDebugging)
             {
                 meadowDebugServer = await meadow.StartDebuggingSession(debugPort, cancellationToken);
             }
