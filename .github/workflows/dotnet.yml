@@ -85,6 +85,13 @@ jobs:
         repository: WildernessLabs/Meadow.CLI
         path: Meadow.CLI
         ref: dominique-MigrateVS2022ExtensionTov2
+    
+    - name: Checkout Meadow.Contracts side-by-side
+      uses: actions/checkout@v2
+      with:
+        repository: WildernessLabs/Meadow.Contracts
+        path: Meadow.Contracts
+        ref: main
 
     - name: Set default Xamarin SDK versions
       run: |
