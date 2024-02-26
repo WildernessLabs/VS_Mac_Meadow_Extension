@@ -98,7 +98,7 @@ jobs:
         $VM_ASSETS/select-xamarin-sdk-v2.sh --mono=6.12 --mac=8.2
 
     - name: Setup .NET Core 6.0.x, 7.0.x and 8.0.x
-      uses: actions/setup-dotnet@v2
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
           6.0.x
