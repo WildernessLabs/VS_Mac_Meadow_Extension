@@ -106,7 +106,7 @@ jobs:
           8.0.x
 
     - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1.0.5
+      uses: NuGet/setup-nuget@v2
 
     - if: ${{ github.event_name == 'workflow_dispatch' }}
       name: Update VS2022 Version Numbers
