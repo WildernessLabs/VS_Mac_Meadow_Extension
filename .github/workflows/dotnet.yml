@@ -122,7 +122,7 @@ jobs:
         dotnet msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.2022.csproj /t:Build /p:Configuration=Release /p:CreatePackage=true
 
     - name: Upload mpack Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: Meadow.Mac.2022.mpack.${{ ENV.IDE_TOOLS_RELEASE_VERSION }}
         path: 'main/VS4Mac_Meadow_Extension/bin/Release/net7.0/*.mpack'
