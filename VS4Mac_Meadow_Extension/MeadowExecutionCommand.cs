@@ -2,16 +2,15 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Meadow.CLI;
+using Meadow.Deployment;
+using Meadow.Hcom;
 using MonoDevelop.Core;
 using MonoDevelop.Core.Execution;
 using MonoDevelop.Ide;
 using MonoDevelop.Projects;
 
-using Meadow.CLI.Core;
-using Meadow.CLI.Core.DeviceManagement;
-using Meadow.CLI.Core.Devices;
-using Meadow.CLI.Core.Internals.MeadowCommunication.ReceiveClasses;
+
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -29,7 +28,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         public FilePath OutputDirectory { get; set; }
 
         OutputLogger logger;
-        MeadowDeviceHelper meadow = null;
+        IMeadowConnection meadowConnection = null;
         DebuggingServer meadowDebugServer = null;
 
         public async Task DeployApp(int debugPort, CancellationToken cancellationToken)
@@ -37,27 +36,59 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             DeploymentTargetsManager.StopPollingForDevices();
 
             cleanedup = false;
-            meadow?.Dispose();
+            // meadowConnection?.Dispose();
 
-            var target = this.Target as MeadowDeviceExecutionTarget;
+            /*var target = this.Target as MeadowDeviceExecutionTarget;
             var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Port, logger: logger)
                 .ConfigureAwait(false);
 
-            meadow = new MeadowDeviceHelper(device, device.Logger);
+            meadowConnection = new MeadowDeviceHelper(device, device.Logger);*/
+
+            if (meadowConnection == null)
+            {
+                Console.WriteLine("Creating SettingsManager");
+                var sm = new SettingsManager();
+
+                Console.WriteLine("Gettting Route");
+                var route = sm.GetSetting(SettingsManager.PublicSettings.Route);
+
+                Console.WriteLine($"Current Route:{route}");
+                if (route == null)
+                {
+                    throw new Exception($"No 'route' configuration set.{Environment.NewLine}Use the `meadow config route` command. For example:{Environment.NewLine}  > meadow config route COM5");
+                }
+
+                var retryCount = 0;
+
+                Console.WriteLine($"get_serial_connection");
+                get_serial_connection:
+                try
+                {
+                    meadowConnection = new SerialConnection(route);
+                }
+                catch
+                {
+                    retryCount++;
+                    if (retryCount > 10)
+                    {
+                        throw new Exception($"Cannot find port {route}");
+                    }
+                    Thread.Sleep(500);
+                    goto get_serial_connection;
+                }
+            }
 
             //wrap this is a try/catch so it doesn't crash if the developer is offline
             try
             {
-                string osVersion = await meadow.GetOSVersion(TimeSpan.FromSeconds(30), cancellationToken);
+                string osVersion = (await meadowConnection.GetDeviceInfo(cancellationToken)).OsVersion;
 
-                await new DownloadManager(logger).DownloadOsBinaries(osVersion);
+                // TODO await new DownloadManager(logger).DownloadOsBinaries(osVersion);
             }
             catch
             {
                 Console.WriteLine("OS download failed, make sure you have an active internet connection");
             }
-
-            var fileNameExe = System.IO.Path.Combine(OutputDirectory, "App.dll");
 
             var configuration = IdeApp.Workspace.ActiveConfiguration;
 
@@ -65,11 +96,20 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 && isScs?.Id == "Debug"
                 && debugPort > 1000;
 
-            await meadow.DeployApp(fileNameExe, includePdbs, cancellationToken);
+            meadowConnection.FileWriteProgress += DeployFileProgress;
+
+            try
+            {
+                await AppManager.DeployApplication(null, meadowConnection, OutputDirectory, includePdbs, false, logger, cancellationToken);
+            }
+            finally
+            {
+                meadowConnection.FileWriteProgress -= DeployFileProgress;
+            }
 
             if (includePdbs)
             {
-                meadowDebugServer = await meadow.StartDebuggingSession(debugPort, cancellationToken);
+                meadowDebugServer = await meadowConnection?.StartDebuggingSession(debugPort, logger, cancellationToken);
             }
             else
             {
@@ -79,6 +119,11 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
                 Cleanup();
             }
+        }
+
+        private void DeployFileProgress(object sender, (string fileName, long completed, long total) e)
+        {
+            Console.WriteLine($"Transferrring : {e.fileName}");
         }
 
         bool cleanedup = true;
@@ -91,7 +136,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             meadowDebugServer?.Dispose();
             meadowDebugServer = null;
 
-            meadow?.Dispose();
+            // tODO meadowConnection?.Dispose();
 
             if (!cleanedup)
                 _ = DeploymentTargetsManager.StartPollingForDevices();

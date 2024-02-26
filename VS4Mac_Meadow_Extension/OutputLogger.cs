@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Linq;
 using Microsoft.Extensions.Logging;
 using MonoDevelop.Core;
 using MonoDevelop.Core.Execution;
 using MonoDevelop.Ide;
-using MonoDevelop.Ide.Gui.Pads;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -48,24 +46,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             {
                 // This appears in the "Meadow" tab
                 monitor?.Log.WriteLine(msg.Substring(15));
-            }
-            else if(msg == "[")
-            {
-                if (statusMonitor is null)
-                    statusMonitor = IdeApp.Workbench.ProgressMonitors.GetStatusProgressMonitor("File Transferring", IconId.Null, false);
-
-                nextProgress = 0;
-                statusMonitor.BeginTask("File Transferrring", TOTAL_PROGRESS);
-
-            }
-            else if (msg == "]")
-            {
-                statusMonitor.EndTask();
-            }
-            else if (msg == "=")
-            {
-                statusMonitor.Step(nextProgress);
-                nextProgress += PROGRESS_INCREMENT;
             }
             else
             {

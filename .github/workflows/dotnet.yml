@@ -1,6 +1,6 @@
 name: VS4Mac Extension
 env:
-  IDE_TOOLS_RELEASE_VERSION: 1.9.4
+  IDE_TOOLS_RELEASE_VERSION: 2.0.0
   MEADOW_OS_VERSION: 2.0.0.0
   VS_MAC_2022_VERSION: 17.6
 
@@ -14,60 +14,61 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-mac-2019:
+  # build-mac-2019:
 
-    runs-on: macos-11
+  #   runs-on: macos-11
 
-    steps:
-    - name: Checkout current repo
-      uses: actions/checkout@v3
-      with:
-        path: main
+  #   steps:
+  #   - name: Checkout current repo
+  #     uses: actions/checkout@v3
+  #     with:
+  #       path: main
 
-    - name: Checkout Meadow.CLI.Core side-by-side
-      uses: actions/checkout@v3
-      with:
-        repository: WildernessLabs/Meadow.CLI
-        path: Meadow.CLI
-        ref: develop
+  #   - name: Checkout Meadow.CLI.Core side-by-side
+  #     uses: actions/checkout@v3
+  #     with:
+  #       repository: WildernessLabs/Meadow.CLI
+  #       path: Meadow.CLI
+  #       ref: dominique-MigrateVS2022ExtensionTov2
 
-    - name: Set default Xamarin SDK versions
-      run: |
-        $VM_ASSETS/select-xamarin-sdk-v2.sh --mono=6.12 --mac=8.2
+  #   - name: Set default Xamarin SDK versions
+  #     run: |
+  #       $VM_ASSETS/select-xamarin-sdk-v2.sh --mono=6.12 --mac=8.2
 
-    - name: Setup .NET Core SDK 5.0.x and 6.0.x
-      uses: actions/setup-dotnet@v2
-      with:
-        dotnet-version: |
-          5.0.x
-          6.0.x
+  #   - name: Setup .NET Core SDK 6.0.x, 7.0.x and 8.0.x
+  #     uses: actions/setup-dotnet@v2
+  #     with:
+  #       dotnet-version: | 
+  #         6.0.x
+  #         7.0.x
+  #         8.0.x
 
-    - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1.0.5
+  #   - name: Setup NuGet
+  #     uses: NuGet/setup-nuget@v1.0.5
 
-    - name: Rename VS so we pick up VS2019 IDE
-      run: |
-        mv "/Applications/Visual Studio.app" "/Applications/Visual Studio 2022.app"
-        mv "/Applications/Visual Studio 2019.app" "/Applications/Visual Studio.app"
+  #   - name: Rename VS so we pick up VS2019 IDE
+  #     run: |
+  #       mv "/Applications/Visual Studio.app" "/Applications/Visual Studio 2022.app"
+  #       mv "/Applications/Visual Studio 2019.app" "/Applications/Visual Studio.app"
 
-    - if: ${{ github.event_name == 'workflow_dispatch' }}
-      name: Update VS2019 Version Numbers
-      run: |
-        sed -i "" "s/Version = \"1.*\"/Version = \"${{ENV.IDE_TOOLS_RELEASE_VERSION}}\"/" main/VS4Mac_Meadow_Extension/Properties/AddinInfo.cs
+  #   - if: ${{ github.event_name == 'workflow_dispatch' }}
+  #     name: Update VS2019 Version Numbers
+  #     run: |
+  #       sed -i "" "s/Version = \"1.*\"/Version = \"${{ENV.IDE_TOOLS_RELEASE_VERSION}}\"/" main/VS4Mac_Meadow_Extension/Properties/AddinInfo.cs
 
-    - name: Restore our VS2019 project
-      run: |
-        msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj /t:Restore /p:Configuration=Release
+  #   - name: Restore our VS2019 project
+  #     run: |
+  #       msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj /t:Restore /p:Configuration=Release
 
-    - name: Build and Package the VS2019 Extension
-      run: |
-        msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj /t:Build /p:Configuration=Release /p:CreatePackage=true
+  #   - name: Build and Package the VS2019 Extension
+  #     run: |
+  #       msbuild main/VS4Mac_Meadow_Extension/Meadow.Sdks.IdeExtensions.Vs4Mac.csproj /t:Build /p:Configuration=Release /p:CreatePackage=true
 
-    - name: Upload mpack Artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: Meadow.Mac.2019.mpack.${{ ENV.IDE_TOOLS_RELEASE_VERSION }}
-        path: 'main/VS4Mac_Meadow_Extension/bin/Release/net472/*.mpack'
+  #   - name: Upload mpack Artifacts
+  #     uses: actions/upload-artifact@v2
+  #     with:
+  #       name: Meadow.Mac.2019.mpack.${{ ENV.IDE_TOOLS_RELEASE_VERSION }}
+  #       path: 'main/VS4Mac_Meadow_Extension/bin/Release/net472/*.mpack'
 
   build-mac-2022:
     runs-on: macos-12
@@ -83,17 +84,19 @@ jobs:
       with:
         repository: WildernessLabs/Meadow.CLI
         path: Meadow.CLI
-        ref: develop
+        ref: dominique-MigrateVS2022ExtensionTov2
 
     - name: Set default Xamarin SDK versions
       run: |
         $VM_ASSETS/select-xamarin-sdk-v2.sh --mono=6.12 --mac=8.2
 
-    - name: Setup .NET Core 6.0.x
+    - name: Setup .NET Core 6.0.x, 7.0.x and 8.0.x
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: |
           6.0.x
+          7.0.x
+          8.0.x
 
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1.0.5
