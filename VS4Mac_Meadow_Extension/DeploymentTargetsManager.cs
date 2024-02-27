@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Meadow.CLI.Commands.DeviceManagement;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -34,7 +35,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             while (cts.IsCancellationRequested == false)
             {
-                await Task.Run(()=> UpdateTargetsList(GetMeadowSerialPorts(), cts.Token));
+                await Task.Run(async ()=> UpdateTargetsList(await MeadowConnectionManager.GetSerialPorts(), cts.Token));
                 await Task.Delay(5000);
             }
 
@@ -103,7 +104,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             return ports;
         }
 
-        private static void UpdateTargetsList(List<string> serialPorts, CancellationToken ct)
+        private static void UpdateTargetsList(IList<string> serialPorts, CancellationToken ct)
         {
             Debug.WriteLine("Update targets list");
             //var serialPorts = MeadowDeviceManager.FindSerialDevices();

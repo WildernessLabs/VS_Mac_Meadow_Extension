@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MonoDevelop.Core;
 using MonoDevelop.Core.Execution;
@@ -11,8 +12,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         static ProgressMonitor monitor;
         static ProgressMonitor statusMonitor;
         static OutputProgressMonitor toolMonitor;
-        int nextProgress = 0;
-        const int PROGRESS_INCREMENT = 5;
         const int TOTAL_PROGRESS = 100;
 
         public OutputLogger()
@@ -51,6 +50,27 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             {
                 // This appears in the "Tools Output" tab
                 toolMonitor?.Log.Write(msg);
+            }
+        }
+
+        public void Report(string filename, int percentage)
+        {
+            if (statusMonitor is null)
+                statusMonitor = IdeApp.Workbench.ProgressMonitors.GetStatusProgressMonitor("File Transferring", IconId.Null, false);
+
+            if (percentage < 1)
+            {
+                statusMonitor?.BeginTask($"File Transferring: {filename}", TOTAL_PROGRESS);
+            }
+
+            if (percentage >= 1 && percentage <= 99)
+            {
+                statusMonitor?.Step(percentage);
+            }
+
+            if (percentage > 99)
+            {
+                statusMonitor?.EndTask();
             }
         }
     }

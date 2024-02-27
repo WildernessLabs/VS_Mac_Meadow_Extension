@@ -96,7 +96,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 && isScs?.Id == "Debug"
                 && debugPort > 1000;
 
-            meadowConnection.FileWriteProgress += DeployFileProgress;
+            meadowConnection.FileWriteProgress += MeadowConnection_DeploymentProgress;
 
             try
             {
@@ -104,7 +104,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             }
             finally
             {
-                meadowConnection.FileWriteProgress -= DeployFileProgress;
+                meadowConnection.FileWriteProgress -= MeadowConnection_DeploymentProgress;
             }
 
             if (includePdbs)
@@ -121,9 +121,10 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             }
         }
 
-        private void DeployFileProgress(object sender, (string fileName, long completed, long total) e)
+        private void MeadowConnection_DeploymentProgress(object sender, (string fileName, long completed, long total) e)
         {
-            Console.WriteLine($"Transferrring : {e.fileName}");
+            var p = (int)((e.completed / (double)e.total) * 100d);
+            logger?.Report(e.fileName, p);
         }
 
         bool cleanedup = true;
@@ -136,7 +137,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             meadowDebugServer?.Dispose();
             meadowDebugServer = null;
 
-            // tODO meadowConnection?.Dispose();
+            // TODO meadowConnection?.Dispose();
 
             if (!cleanedup)
                 _ = DeploymentTargetsManager.StartPollingForDevices();
