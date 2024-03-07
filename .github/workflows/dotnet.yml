@@ -93,9 +93,9 @@ jobs:
         path: Meadow.Contracts
         ref: main
 
-    - name: Set default Xamarin SDK versions
-      run: |
-        $VM_ASSETS/select-xamarin-sdk-v2.sh --mono=6.12 --mac=8.2
+    # - name: Set default Xamarin SDK versions
+    #   run: |
+    #     $VM_ASSETS/select-xamarin-sdk-v2.sh --mono=6.12 --mac=8.2
 
     - name: Setup .NET Core 6.0.x, 7.0.x and 8.0.x
       uses: actions/setup-dotnet@v4
