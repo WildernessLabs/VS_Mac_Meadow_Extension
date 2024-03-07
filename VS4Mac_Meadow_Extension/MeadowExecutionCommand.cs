@@ -76,6 +76,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                     Thread.Sleep(500);
                     goto get_serial_connection;
                 }
+
+                await meadowConnection.WaitForMeadowAttach();
             }
 
             //wrap this is a try/catch so it doesn't crash if the developer is offline
