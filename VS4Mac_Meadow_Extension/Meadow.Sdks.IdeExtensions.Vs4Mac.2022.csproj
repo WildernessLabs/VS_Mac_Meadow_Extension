@@ -21,7 +21,6 @@
     <Compile Remove="Properties\AddinInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Meadow.CLI\Source\v2\Meadow.HCom\Meadow.HCom.csproj" />
-    <ProjectReference Include="..\..\Meadow.CLI\Source\v2\Meadow.CLI.Extension\Meadow.CLI.Extension.csproj" />
+    <ProjectReference Include="..\..\Meadow.CLI\Source\v2\Meadow.Tooling.Core\Meadow.Tooling.Core.csproj" />
   </ItemGroup>
 </Project>

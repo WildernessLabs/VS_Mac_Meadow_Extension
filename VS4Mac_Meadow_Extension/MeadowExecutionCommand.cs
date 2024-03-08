@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Meadow.CLI;
-using Meadow.Deployment;
 using Meadow.Hcom;
 using MonoDevelop.Core;
 using MonoDevelop.Core.Execution;
