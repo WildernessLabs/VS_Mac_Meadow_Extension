@@ -35,12 +35,35 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            if (!IsEnabled(logLevel))
-                return;
+            /*if (!IsEnabled(logLevel))
+                return;*/
 
             var msg = formatter(state, exception);
 
-            if (msg.Contains("StdOut") || msg.Contains("StdInfo"))
+            switch (logLevel)
+            {
+                case LogLevel.Trace:
+                    break;
+                case LogLevel.Debug:
+                    // This appears in the "Meadow" tab
+                    monitor?.Log.WriteLine(msg);
+                    break;
+                case LogLevel.Information:
+                    // This appears in the "Tools Output" tab
+                    toolMonitor?.Log.Write(msg + Environment.NewLine);
+                    break;
+                case LogLevel.Warning:
+                    break;
+                case LogLevel.Error:
+                    break;
+                case LogLevel.Critical:
+                    break;
+                case LogLevel.None:
+                    break;
+                default:
+                    break;
+            }
+            /*if (msg.Contains("StdOut") || msg.Contains("StdInfo"))
             {
                 // This appears in the "Meadow" tab
                 monitor?.Log.WriteLine(msg.Substring(15));
@@ -49,7 +72,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             {
                 // This appears in the "Tools Output" tab
                 toolMonitor?.Log.Write(msg + Environment.NewLine);
-            }
+            }*/
         }
 
         public void Report(string filename, int percentage)

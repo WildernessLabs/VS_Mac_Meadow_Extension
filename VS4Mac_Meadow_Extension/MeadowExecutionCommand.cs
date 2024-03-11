@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Meadow.CLI;
 using Meadow.Hcom;
+using Microsoft.Extensions.Logging;
 using MonoDevelop.Core;
 using MonoDevelop.Core.Execution;
 using MonoDevelop.Ide;
@@ -27,7 +28,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         public FilePath OutputDirectory { get; set; }
 
-        OutputLogger logger;
+        ILogger logger;
         IMeadowConnection meadowConnection = null;
         DebuggingServer meadowDebugServer = null;
 
@@ -86,7 +87,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 && isScs?.Id == "Debug"
                 && debugPort > 1000;
 
-            meadowConnection.FileWriteProgress += MeadowConnection_DeploymentProgress;
+            meadowConnection!.FileWriteProgress += MeadowConnection_DeploymentProgress;
+            meadowConnection!.DeviceMessageReceived += MeadowConnection_DeviceMessageReceived;
 
             try
             {
@@ -99,11 +101,9 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             if (includePdbs)
             {
-                //logger?.Log("Hooking up Debugger Messages");
                 meadowConnection.DebuggerMessageReceived += MeadowConnection_DebuggerMessages;
                 try
                 {
-                    //logger?.LogInformation("StartDebuggingSession");
                     meadowDebugServer = await meadowConnection?.StartDebuggingSession(debugPort, logger, cancellationToken);
                 }
                 finally
@@ -122,15 +122,23 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             }
         }
 
+        private void MeadowConnection_DeviceMessageReceived(object sender, (string message, string source) e)
+        {
+            logger?.LogDebug(e.message);
+        }
+
         private void MeadowConnection_DebuggerMessages(object sender, byte[] e)
         {
-            Console.WriteLine("Bytes received");
+            logger?.LogDebug($"Bytes received:{e}");
         }
 
         private void MeadowConnection_DeploymentProgress(object sender, (string fileName, long completed, long total) e)
         {
             var p = (int)((e.completed / (double)e.total) * 100d);
-            logger?.Report(e.fileName, p);
+            if (logger is OutputLogger outputLogger)
+            {
+                outputLogger.Report(e.fileName, p);
+            }
         }
 
         bool cleanedup = true;
@@ -139,11 +147,20 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             if (cleanedup)
                 return;
 
-            meadowDebugServer?.StopListening();
-            meadowDebugServer?.Dispose();
-            meadowDebugServer = null;
+            if (meadowDebugServer != null)
+            {
+                meadowDebugServer?.StopListening();
+                meadowDebugServer?.Dispose();
+                meadowDebugServer = null;
+            }
 
-            meadowConnection?.Dispose();
+            if (meadowConnection != null)
+            {
+                meadowConnection.DeviceMessageReceived -= MeadowConnection_DeviceMessageReceived;
+                meadowConnection.DebuggerMessageReceived -= MeadowConnection_DebuggerMessages;
+                meadowConnection.Dispose();
+                meadowConnection = null;
+            }
 
             if (!cleanedup)
                 _ = DeploymentTargetsManager.StartPollingForDevices();
