@@ -19,7 +19,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         public static List<MeadowDeviceExecutionTarget> Targets { get; private set; } = new List<MeadowDeviceExecutionTarget>();
 
         private static bool isPolling;
-        private static CancellationTokenSource cts;
+        private static CancellationTokenSource cancellationTokenSource = null;
 
         public static event Action<object> DeviceListChanged;
 
@@ -31,11 +31,14 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             isPolling = true;
 
-            cts = new CancellationTokenSource();
-
-            while (cts.IsCancellationRequested == false)
+            if (cancellationTokenSource == null)
             {
-                await Task.Run(async ()=> UpdateTargetsList(await MeadowConnectionManager.GetSerialPorts(), cts.Token));
+                cancellationTokenSource = new CancellationTokenSource();
+            }
+
+            while (cancellationTokenSource.IsCancellationRequested == false)
+            {
+                await Task.Run(async ()=> UpdateTargetsList(await MeadowConnectionManager.GetSerialPorts(), cancellationTokenSource.Token));
                 await Task.Delay(5000);
             }
 
@@ -44,67 +47,10 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         public static void StopPollingForDevices()
         {
-            cts?.Cancel();
+            cancellationTokenSource?.Cancel();
         }
 
-        //Experiemental use of ioreg to find serial ports for connected Meadow devices
-        //Relies on string parsing - may break if macOS moves ioreg or the output of ioreg changes signifigantly
-        //Adrian - my guess is, this is fairly stable 
-        static List<string> GetMeadowSerialPorts()
-        {
-            Debug.WriteLine("Get Meadow Serial ports");
-            var ports = new List<string>();
-
-            var psi = new ProcessStartInfo
-            {
-                FileName = "/usr/sbin/ioreg",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                Arguments = "-r -c IOUSBHostDevice -l"
-            };
-
-            string output = string.Empty;
-
-            using (var p = Process.Start(psi))
-            {
-                if (p != null)
-                {
-                    output = p.StandardOutput.ReadToEnd();
-                    p.WaitForExit();
-                }
-            }
-
-            //split into lines
-            var lines = output.Split("\n\r".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-
-            bool foundMeadow = false;
-            for (int i = 0; i < lines.Length; i++)
-            {
-                if (lines[i].Contains("Meadow F7 Micro"))
-                {
-                    foundMeadow = true;
-                }
-                else if (lines[i].IndexOf("+-o") == 0)
-                {
-                    foundMeadow = false;
-                }
-
-                //now find the IODialinDevice entry which contains the serial port name
-                if (foundMeadow && lines[i].Contains("IODialinDevice"))
-                {
-                    int startIndex = lines[i].IndexOf("/");
-                    int endIndex = lines[i].IndexOf("\"", startIndex + 1);
-                    var port = lines[i].Substring(startIndex, endIndex - startIndex);
-                    Debug.WriteLine($"Found Meadow at {port}");
-
-                    ports.Add(port);
-                    foundMeadow = false;
-                }
-            }
-            return ports;
-        }
-
-        private static void UpdateTargetsList(IList<string> serialPorts, CancellationToken ct)
+        private static void UpdateTargetsList(IList<string> serialPorts, CancellationToken cancellationToken)
         {
             Debug.WriteLine("Update targets list");
             //var serialPorts = MeadowDeviceManager.FindSerialDevices();
@@ -112,7 +58,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             foreach (var port in serialPorts)
             {
-                if (ct.IsCancellationRequested)
+                if (cancellationToken.IsCancellationRequested)
                 { break; }
 
                 if (Targets.Any(t => t.Id == port))

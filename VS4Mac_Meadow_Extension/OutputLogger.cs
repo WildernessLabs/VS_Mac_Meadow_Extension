@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MonoDevelop.Core;
 using MonoDevelop.Core.Execution;
@@ -49,7 +48,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             else
             {
                 // This appears in the "Tools Output" tab
-                toolMonitor?.Log.Write(msg);
+                toolMonitor?.Log.Write(msg + Environment.NewLine);
             }
         }
 

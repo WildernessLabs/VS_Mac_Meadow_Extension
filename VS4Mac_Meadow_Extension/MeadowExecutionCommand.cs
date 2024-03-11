@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Meadow.CLI;
@@ -35,48 +36,36 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             DeploymentTargetsManager.StopPollingForDevices();
 
             cleanedup = false;
-            // meadowConnection?.Dispose();
-
-            /*var target = this.Target as MeadowDeviceExecutionTarget;
-            var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Port, logger: logger)
-                .ConfigureAwait(false);
-
-            meadowConnection = new MeadowDeviceHelper(device, device.Logger);*/
 
             if (meadowConnection == null)
             {
-                Console.WriteLine("Creating SettingsManager");
-                var sm = new SettingsManager();
 
-                Console.WriteLine("Gettting Route");
-                var route = sm.GetSetting(SettingsManager.PublicSettings.Route);
-
-                Console.WriteLine($"Current Route:{route}");
-                if (route == null)
-                {
-                    throw new Exception($"No 'route' configuration set.{Environment.NewLine}Use the `meadow config route` command. For example:{Environment.NewLine}  > meadow config route COM5");
-                }
+                var target = Target as MeadowDeviceExecutionTarget;
 
                 var retryCount = 0;
 
-                Console.WriteLine($"get_serial_connection");
+                Debug.WriteLine($"get_serial_connection");
                 get_serial_connection:
                 try
                 {
-                    meadowConnection = new SerialConnection(route);
+                    meadowConnection = new SerialConnection(target?.Port, logger);
                 }
                 catch
                 {
                     retryCount++;
                     if (retryCount > 10)
                     {
-                        throw new Exception($"Cannot find port {route}");
+                        throw new Exception($"Cannot find port {target?.Port}");
                     }
                     Thread.Sleep(500);
                     goto get_serial_connection;
                 }
 
-                await meadowConnection.WaitForMeadowAttach();
+                await meadowConnection!.WaitForMeadowAttach();
+            }
+            else
+            {
+                // TODO Maybe just set a new port, rather than create at totally new object?? meadowConnection.Name = target?.Port;
             }
 
             //wrap this is a try/catch so it doesn't crash if the developer is offline
@@ -88,7 +77,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             }
             catch
             {
-                Console.WriteLine("OS download failed, make sure you have an active internet connection");
+                Debug.WriteLine("OS download failed, make sure you have an active internet connection");
             }
 
             var configuration = IdeApp.Workspace.ActiveConfiguration;
@@ -110,7 +99,18 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             if (includePdbs)
             {
-                meadowDebugServer = await meadowConnection?.StartDebuggingSession(debugPort, logger, cancellationToken);
+                //logger?.Log("Hooking up Debugger Messages");
+                meadowConnection.DebuggerMessageReceived += MeadowConnection_DebuggerMessages;
+                try
+                {
+                    //logger?.LogInformation("StartDebuggingSession");
+                    meadowDebugServer = await meadowConnection?.StartDebuggingSession(debugPort, logger, cancellationToken);
+                }
+                finally
+                {
+                    //logger?.LogInformation("Releasing Debugger Messages");
+                    //meadowConnection.DebuggerMessageReceived -= MeadowConnection_DebuggerMessages;
+                }
             }
             else
             {
@@ -120,6 +120,11 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
                 Cleanup();
             }
+        }
+
+        private void MeadowConnection_DebuggerMessages(object sender, byte[] e)
+        {
+            Console.WriteLine("Bytes received");
         }
 
         private void MeadowConnection_DeploymentProgress(object sender, (string fileName, long completed, long total) e)
@@ -138,7 +143,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             meadowDebugServer?.Dispose();
             meadowDebugServer = null;
 
-            // TODO meadowConnection?.Dispose();
+            meadowConnection?.Dispose();
 
             if (!cleanedup)
                 _ = DeploymentTargetsManager.StartPollingForDevices();
