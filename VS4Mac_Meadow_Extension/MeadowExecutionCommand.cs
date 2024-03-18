@@ -17,11 +17,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
     public class MeadowExecutionCommand : ProcessExecutionCommand
     {
-        public MeadowExecutionCommand() :  base()
-        {
-            logger = new OutputLogger();
-        }
-
         // Adrian: Task because it's been assigned in a non-async method
         // i.e. it's a task to avoid awaiting the assignment (lazy but harmless)
         public Task<List<string>> ReferencedAssemblies { get; set; }
@@ -32,7 +27,12 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         IMeadowConnection meadowConnection = null;
         DebuggingServer meadowDebugServer = null;
 
-        public async Task DeployApp(int debugPort, CancellationToken cancellationToken)
+        public MeadowExecutionCommand() :  base()
+        {
+            logger = new OutputLogger();
+        }
+
+        public async Task DeployApp(int debugPort, bool includePdbs, CancellationToken cancellationToken)
         {
             DeploymentTargetsManager.StopPollingForDevices();
 
@@ -80,12 +80,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             {
                 Debug.WriteLine("OS download failed, make sure you have an active internet connection");
             }
-
-            var configuration = IdeApp.Workspace.ActiveConfiguration;
-
-            bool includePdbs = configuration is SolutionConfigurationSelector isScs
-                && isScs?.Id == "Debug"
-                && debugPort > 1000;
 
             meadowConnection!.FileWriteProgress += MeadowConnection_DeploymentProgress;
             meadowConnection!.DeviceMessageReceived += MeadowConnection_DeviceMessageReceived;

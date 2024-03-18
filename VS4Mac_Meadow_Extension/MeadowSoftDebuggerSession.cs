@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Threading;
 using Mono.Debugging.Client;
 using Mono.Debugging.Soft;
+using MonoDevelop.Ide;
+using MonoDevelop.Projects;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -25,7 +27,13 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 var connectArgs = meadowStartInfo.StartArgs as SoftDebuggerConnectArgs;
                 var port = connectArgs?.DebugPort ?? 0;
 
-                await meadowStartInfo.ExecutionCommand.DeployApp(port, debugCancelTokenSource.Token);
+                var configuration = IdeApp.Workspace.ActiveConfiguration;
+
+                bool includePdbs = configuration is SolutionConfigurationSelector isScs
+                    && isScs?.Id == "Debug"
+                    && port > 1000;
+
+                await meadowStartInfo.ExecutionCommand.DeployApp(port, includePdbs, debugCancelTokenSource.Token);
 
                 base.OnRun(startInfo);
             }
