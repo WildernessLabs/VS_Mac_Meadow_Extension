@@ -87,6 +87,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             try
             {
                 await AppManager.DeployApplication(null, meadowConnection, OutputDirectory, includePdbs, false, logger, cancellationToken);
+
+                await meadowConnection!.WaitForMeadowAttach();
             }
             finally
             {
@@ -118,7 +120,24 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         private void MeadowConnection_DeviceMessageReceived(object sender, (string message, string source) e)
         {
-            logger?.LogDebug(e.message);
+            switch (e.source)
+            {
+                case "info":
+                    logger?.LogInformation($"  {e.message}");
+                    break;
+
+                case "error":
+                    logger?.LogError($"Error: {e.message}");
+                    break;
+
+                case "warning":
+                    logger?.LogWarning($"Warning: {e.message}");
+                    break;
+
+                default:
+                    logger?.LogInformation($"  {e.message}");
+                    break;
+            }
         }
 
         private void MeadowConnection_DebuggerMessages(object sender, byte[] e)
