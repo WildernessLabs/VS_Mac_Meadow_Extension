@@ -23,12 +23,12 @@ jobs:
       with:
         path: main
 
-    - name: Checkout Meadow.CLI.Core side-by-side
+    - name: Checkout Meadow.CLI side-by-side
       uses: actions/checkout@v4
       with:
         repository: WildernessLabs/Meadow.CLI
         path: Meadow.CLI
-        ref: dominique-MigrateVS2022ExtensionTov2
+        ref: dominique-V2022ToV2
     
     - name: Checkout Meadow.Contracts side-by-side
       uses: actions/checkout@v4
