@@ -120,23 +120,9 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         private void MeadowConnection_DeviceMessageReceived(object sender, (string message, string source) e)
         {
-            switch (e.source)
+            if (logger is OutputLogger outputLogger)
             {
-                case "info":
-                    logger?.LogInformation($"  {e.message}");
-                    break;
-
-                case "error":
-                    logger?.LogError($"Error: {e.message}");
-                    break;
-
-                case "warning":
-                    logger?.LogWarning($"Warning: {e.message}");
-                    break;
-
-                default:
-                    logger?.LogInformation($"  {e.message}");
-                    break;
+                outputLogger.ReportDeviceMessage(e.message);
             }
         }
 
@@ -150,7 +136,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             var p = (int)((e.completed / (double)e.total) * 100d);
             if (logger is OutputLogger outputLogger)
             {
-                outputLogger.Report(e.fileName, p);
+                outputLogger.ReportFileProgress(e.fileName, p);
             }
         }
 
