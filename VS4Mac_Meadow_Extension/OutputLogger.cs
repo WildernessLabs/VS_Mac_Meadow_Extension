@@ -47,11 +47,11 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         public void ReportFileProgress(string filename, int percentage)
         {
             if (statusMonitor is null)
-                statusMonitor = IdeApp.Workbench.ProgressMonitors.GetStatusProgressMonitor("File Transferring", IconId.Null, false);
+                statusMonitor = IdeApp.Workbench.ProgressMonitors.GetStatusProgressMonitor("File Transfer", IconId.Null, false);
 
             if (percentage < 1)
             {
-                statusMonitor?.BeginTask($"File Transferring: {filename}", TOTAL_PROGRESS);
+                statusMonitor?.BeginTask($"Transferring: {filename}", TOTAL_PROGRESS);
             }
 
             if (percentage >= 1 && percentage <= 99)
