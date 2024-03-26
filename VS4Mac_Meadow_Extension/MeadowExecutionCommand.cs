@@ -27,7 +27,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         IMeadowConnection meadowConnection = null;
         DebuggingServer meadowDebugServer = null;
 
-        public MeadowExecutionCommand() :  base()
+        public MeadowExecutionCommand() : base()
         {
             logger = new OutputLogger();
         }
@@ -46,7 +46,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 var retryCount = 0;
 
                 Debug.WriteLine($"get_serial_connection");
-                get_serial_connection:
+            get_serial_connection:
                 try
                 {
                     meadowConnection = new SerialConnection(target?.Port, logger);
@@ -97,16 +97,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             if (includePdbs)
             {
-                meadowConnection.DebuggerMessageReceived += MeadowConnection_DebuggerMessages;
-                try
-                {
-                    meadowDebugServer = await meadowConnection?.StartDebuggingSession(debugPort, logger, cancellationToken);
-                }
-                finally
-                {
-                    //logger?.LogInformation("Releasing Debugger Messages");
-                    //meadowConnection.DebuggerMessageReceived -= MeadowConnection_DebuggerMessages;
-                }
+                meadowDebugServer = await meadowConnection?.StartDebuggingSession(debugPort, logger, cancellationToken);
             }
             else
             {
@@ -124,11 +115,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             {
                 outputLogger.ReportDeviceMessage(e.message);
             }
-        }
-
-        private void MeadowConnection_DebuggerMessages(object sender, byte[] e)
-        {
-            logger?.LogDebug($"Bytes received:{e}");
         }
 
         private void MeadowConnection_DeploymentProgress(object sender, (string fileName, long completed, long total) e)
@@ -156,7 +142,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             if (meadowConnection != null)
             {
                 meadowConnection.DeviceMessageReceived -= MeadowConnection_DeviceMessageReceived;
-                meadowConnection.DebuggerMessageReceived -= MeadowConnection_DebuggerMessages;
                 meadowConnection.Dispose();
                 meadowConnection = null;
             }
