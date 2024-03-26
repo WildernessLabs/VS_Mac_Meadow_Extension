@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Linq;
 using Microsoft.Extensions.Logging;
 using MonoDevelop.Core;
 using MonoDevelop.Core.Execution;
 using MonoDevelop.Ide;
-using MonoDevelop.Ide.Gui.Pads;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -13,8 +11,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
         static ProgressMonitor monitor;
         static ProgressMonitor statusMonitor;
         static OutputProgressMonitor toolMonitor;
-        int nextProgress = 0;
-        const int PROGRESS_INCREMENT = 5;
         const int TOTAL_PROGRESS = 100;
 
         public OutputLogger()
@@ -44,34 +40,35 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             var msg = formatter(state, exception);
 
-            if (msg.Contains("StdOut") || msg.Contains("StdInfo"))
-            {
-                // This appears in the "Meadow" tab
-                monitor?.Log.WriteLine(msg.Substring(15));
-            }
-            else if(msg == "[")
-            {
-                if (statusMonitor is null)
-                    statusMonitor = IdeApp.Workbench.ProgressMonitors.GetStatusProgressMonitor("File Transferring", IconId.Null, false);
+            // This appears in the "Tools Output" tab
+            toolMonitor?.Log.Write(msg + Environment.NewLine);
+        }
 
-                nextProgress = 0;
-                statusMonitor.BeginTask("File Transferrring", TOTAL_PROGRESS);
+        public void ReportFileProgress(string filename, int percentage)
+        {
+            if (statusMonitor is null)
+                statusMonitor = IdeApp.Workbench.ProgressMonitors.GetStatusProgressMonitor("File Transfer", IconId.Null, false);
 
-            }
-            else if (msg == "]")
+            if (percentage < 1)
             {
-                statusMonitor.EndTask();
+                statusMonitor?.BeginTask($"Transferring: {filename}", TOTAL_PROGRESS);
             }
-            else if (msg == "=")
+
+            if (percentage >= 1 && percentage <= 99)
             {
-                statusMonitor.Step(nextProgress);
-                nextProgress += PROGRESS_INCREMENT;
+                statusMonitor?.Step(percentage);
             }
-            else
+
+            if (percentage > 99)
             {
-                // This appears in the "Tools Output" tab
-                toolMonitor?.Log.Write(msg);
+                statusMonitor?.EndTask();
             }
+        }
+
+        public void ReportDeviceMessage(string deviceMessage)
+        {
+            // This appears in the "Meadow" tab
+            monitor?.Log.WriteLine(deviceMessage);
         }
     }
 }

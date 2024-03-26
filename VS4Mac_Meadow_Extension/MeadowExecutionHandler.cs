@@ -1,13 +1,6 @@
 ﻿using MonoDevelop.Core.Execution;
-using System.Threading.Tasks;
 using System.Threading;
-using MonoDevelop.Core;
-using System.Collections.Generic;
 using System;
-using System.IO;
-using Meadow.CLI.Core.DeviceManagement;
-using Meadow.CLI.Core.DeviceManagement.Tools;
-using Meadow.CLI.Core.Devices;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
@@ -24,7 +17,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             {
                 try
                 {
-                    return new ProcessAsyncOperation(meadowCommand.DeployApp(-1, cts.Token), cts);
+                    return new ProcessAsyncOperation(meadowCommand.DeployApp(-1, false, cts.Token), cts);
                 }
                 catch (Exception ex)
                 {

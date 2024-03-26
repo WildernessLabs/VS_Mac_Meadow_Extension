@@ -1,75 +1,112 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Meadow.CLI;
+using Meadow.Hcom;
+using Meadow.Package;
+using Meadow.Software;
+using Microsoft.Extensions.Logging;
 using MonoDevelop.Core;
 using MonoDevelop.Core.Execution;
 using MonoDevelop.Ide;
 using MonoDevelop.Projects;
 
-using Meadow.CLI.Core;
-using Meadow.CLI.Core.DeviceManagement;
-using Meadow.CLI.Core.Devices;
-using Meadow.CLI.Core.Internals.MeadowCommunication.ReceiveClasses;
+
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
     public class MeadowExecutionCommand : ProcessExecutionCommand
     {
-        public MeadowExecutionCommand() :  base()
-        {
-            logger = new OutputLogger();
-        }
-
         // Adrian: Task because it's been assigned in a non-async method
         // i.e. it's a task to avoid awaiting the assignment (lazy but harmless)
         public Task<List<string>> ReferencedAssemblies { get; set; }
 
         public FilePath OutputDirectory { get; set; }
 
-        OutputLogger logger;
-        MeadowDeviceHelper meadow = null;
+        ILogger logger;
+        IMeadowConnection meadowConnection = null;
         DebuggingServer meadowDebugServer = null;
 
-        public async Task DeployApp(int debugPort, CancellationToken cancellationToken)
+        public MeadowExecutionCommand() : base()
+        {
+            logger = new OutputLogger();
+        }
+
+        public async Task DeployApp(int debugPort, bool includePdbs, CancellationToken cancellationToken)
         {
             DeploymentTargetsManager.StopPollingForDevices();
 
             cleanedup = false;
-            meadow?.Dispose();
 
-            var target = this.Target as MeadowDeviceExecutionTarget;
-            var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Port, logger: logger)
-                .ConfigureAwait(false);
+            if (meadowConnection == null)
+            {
 
-            meadow = new MeadowDeviceHelper(device, device.Logger);
+                var target = Target as MeadowDeviceExecutionTarget;
+
+                var retryCount = 0;
+
+                Debug.WriteLine($"get_serial_connection");
+            get_serial_connection:
+                try
+                {
+                    meadowConnection = new SerialConnection(target?.Port, logger);
+                }
+                catch
+                {
+                    retryCount++;
+                    if (retryCount > 10)
+                    {
+                        throw new Exception($"Cannot find port {target?.Port}");
+                    }
+                    Thread.Sleep(500);
+                    goto get_serial_connection;
+                }
+
+                await meadowConnection!.WaitForMeadowAttach();
+            }
+            else
+            {
+                // TODO Maybe just set a new port, rather than create at totally new object?? meadowConnection.Name = target?.Port;
+            }
+
+            var deviceInfo = await meadowConnection?.GetDeviceInfo(cancellationToken);
+            string osVersion = deviceInfo?.OsVersion;
+
+            var fileManager = new FileManager(null);
+            await fileManager.Refresh();
+
+            var collection = fileManager.Firmware["Meadow F7"];
 
             //wrap this is a try/catch so it doesn't crash if the developer is offline
             try
             {
-                string osVersion = await meadow.GetOSVersion(TimeSpan.FromSeconds(30), cancellationToken);
-
-                await new DownloadManager(logger).DownloadOsBinaries(osVersion);
+                // TODO Download OS once we have a valid MeadowCloudClient
             }
-            catch
+            catch (Exception e)
             {
-                Console.WriteLine("OS download failed, make sure you have an active internet connection");
+                logger?.LogInformation($"OS download failed, make sure you have an active internet connection.{Environment.NewLine}{e.Message}");
             }
 
-            var fileNameExe = System.IO.Path.Combine(OutputDirectory, "App.dll");
+            meadowConnection!.FileWriteProgress += MeadowConnection_DeploymentProgress;
+            meadowConnection!.DeviceMessageReceived += MeadowConnection_DeviceMessageReceived;
 
-            var configuration = IdeApp.Workspace.ActiveConfiguration;
+            try
+            {
+                var packageManager = new PackageManager(fileManager);
+                await AppManager.DeployApplication(packageManager, meadowConnection, OutputDirectory, includePdbs, false, logger, cancellationToken);
 
-            bool includePdbs = configuration is SolutionConfigurationSelector isScs
-                && isScs?.Id == "Debug"
-                && debugPort > 1000;
-
-            await meadow.DeployApp(fileNameExe, includePdbs, cancellationToken);
+                await meadowConnection!.WaitForMeadowAttach();
+            }
+            finally
+            {
+                meadowConnection.FileWriteProgress -= MeadowConnection_DeploymentProgress;
+            }
 
             if (includePdbs)
             {
-                meadowDebugServer = await meadow.StartDebuggingSession(debugPort, cancellationToken);
+                meadowDebugServer = await meadowConnection?.StartDebuggingSession(debugPort, logger, cancellationToken);
             }
             else
             {
@@ -81,17 +118,42 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             }
         }
 
+        private void MeadowConnection_DeviceMessageReceived(object sender, (string message, string source) e)
+        {
+            if (logger is OutputLogger outputLogger)
+            {
+                outputLogger.ReportDeviceMessage(e.message);
+            }
+        }
+
+        private void MeadowConnection_DeploymentProgress(object sender, (string fileName, long completed, long total) e)
+        {
+            var p = (int)((e.completed / (double)e.total) * 100d);
+            if (logger is OutputLogger outputLogger)
+            {
+                outputLogger.ReportFileProgress(e.fileName, p);
+            }
+        }
+
         bool cleanedup = true;
         public void Cleanup()
         {
             if (cleanedup)
                 return;
 
-            meadowDebugServer?.StopListening();
-            meadowDebugServer?.Dispose();
-            meadowDebugServer = null;
+            if (meadowDebugServer != null)
+            {
+                meadowDebugServer?.StopListening();
+                meadowDebugServer?.Dispose();
+                meadowDebugServer = null;
+            }
 
-            meadow?.Dispose();
+            if (meadowConnection != null)
+            {
+                meadowConnection.DeviceMessageReceived -= MeadowConnection_DeviceMessageReceived;
+                meadowConnection.Dispose();
+                meadowConnection = null;
+            }
 
             if (!cleanedup)
                 _ = DeploymentTargetsManager.StartPollingForDevices();
