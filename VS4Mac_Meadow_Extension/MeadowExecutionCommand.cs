@@ -5,6 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Meadow.CLI;
 using Meadow.Hcom;
+using Meadow.Package;
+using Meadow.Software;
 using Microsoft.Extensions.Logging;
 using MonoDevelop.Core;
 using MonoDevelop.Core.Execution;
@@ -69,16 +71,22 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 // TODO Maybe just set a new port, rather than create at totally new object?? meadowConnection.Name = target?.Port;
             }
 
+            var deviceInfo = await meadowConnection?.GetDeviceInfo(cancellationToken);
+            string osVersion = deviceInfo?.OsVersion;
+
+            var fileManager = new FileManager(null);
+            await fileManager.Refresh();
+
+            var collection = fileManager.Firmware["Meadow F7"];
+
             //wrap this is a try/catch so it doesn't crash if the developer is offline
             try
             {
-                string osVersion = (await meadowConnection.GetDeviceInfo(cancellationToken)).OsVersion;
-
-                // TODO await new DownloadManager(logger).DownloadOsBinaries(osVersion);
+                // TODO Download OS once we have a valid MeadowCloudClient
             }
-            catch
+            catch (Exception e)
             {
-                Debug.WriteLine("OS download failed, make sure you have an active internet connection");
+                logger?.LogInformation($"OS download failed, make sure you have an active internet connection.{Environment.NewLine}{e.Message}");
             }
 
             meadowConnection!.FileWriteProgress += MeadowConnection_DeploymentProgress;
@@ -86,7 +94,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             try
             {
-                await AppManager.DeployApplication(null, meadowConnection, OutputDirectory, includePdbs, false, logger, cancellationToken);
+                var packageManager = new PackageManager(fileManager);
+                await AppManager.DeployApplication(packageManager, meadowConnection, OutputDirectory, includePdbs, false, logger, cancellationToken);
 
                 await meadowConnection!.WaitForMeadowAttach();
             }
