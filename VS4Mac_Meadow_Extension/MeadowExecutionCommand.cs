@@ -12,12 +12,13 @@ using Meadow.CLI.Core;
 using Meadow.CLI.Core.DeviceManagement;
 using Meadow.CLI.Core.Devices;
 using Meadow.CLI.Core.Internals.MeadowCommunication.ReceiveClasses;
+using Microsoft.Extensions.Logging;
 
 namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 {
     public class MeadowExecutionCommand : ProcessExecutionCommand
     {
-        public MeadowExecutionCommand() :  base()
+        public MeadowExecutionCommand() : base()
         {
             logger = new OutputLogger();
         }
@@ -28,46 +29,57 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         public FilePath OutputDirectory { get; set; }
 
-        OutputLogger logger;
+        ILogger logger;
         MeadowDeviceHelper meadow = null;
         DebuggingServer meadowDebugServer = null;
 
         public async Task DeployApp(int debugPort, CancellationToken cancellationToken)
         {
-            DeploymentTargetsManager.StopPollingForDevices();
-
-            cleanedup = false;
-            meadow?.Dispose();
-
-            var target = this.Target as MeadowDeviceExecutionTarget;
-            var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Port, logger: logger)
-                .ConfigureAwait(false);
-
-            meadow = new MeadowDeviceHelper(device, device.Logger);
-
-            //wrap this is a try/catch so it doesn't crash if the developer is offline
-            try
-            {
-                string osVersion = await meadow.GetOSVersion(TimeSpan.FromSeconds(30), cancellationToken);
-
-                await new DownloadManager(logger).DownloadOsBinaries(osVersion);
-            }
-            catch
-            {
-                Console.WriteLine("OS download failed, make sure you have an active internet connection");
-            }
-
-            var fileNameExe = System.IO.Path.Combine(OutputDirectory, "App.dll");
-
             var configuration = IdeApp.Workspace.ActiveConfiguration;
 
-            bool includePdbs = configuration is SolutionConfigurationSelector isScs
+            bool isDebugging = configuration is SolutionConfigurationSelector isScs
                 && isScs?.Id == "Debug"
                 && debugPort > 1000;
 
-            await meadow.DeployApp(fileNameExe, includePdbs, cancellationToken);
+            try
+            {
+                DeploymentTargetsManager.StopPollingForDevices();
 
-            if (includePdbs)
+                cleanedup = false;
+                meadow?.Dispose();
+
+                var target = this.Target as MeadowDeviceExecutionTarget;
+                var device = await MeadowDeviceManager.GetMeadowForSerialPort(target.Port, logger: logger)
+                    .ConfigureAwait(false);
+
+                meadow = new MeadowDeviceHelper(device, device.Logger);
+
+                //wrap this is a try/catch so it doesn't crash if the developer is offline
+                try
+                {
+                    string osVersion = await meadow.GetOSVersion(TimeSpan.FromSeconds(30), cancellationToken);
+
+                    await new DownloadManager(logger).DownloadOsBinaries(osVersion);
+                }
+                catch (Exception e)
+                {
+                    logger.LogError($"OS download failed, make sure you have an active internet connection.{Environment.NewLine}Error:{e.Message}");
+                }
+
+                var fileNameExe = System.IO.Path.Combine(OutputDirectory, "App.dll");
+
+                await meadow.DeployApp(fileNameExe, isDebugging, cancellationToken);
+            }
+            finally
+            {
+                var running = await meadow.GetMonoRunState(cancellationToken);
+                if (!running)
+                {
+                    await meadow?.MonoEnable(true, cancellationToken);
+                }
+            }
+
+            if (isDebugging)
             {
                 meadowDebugServer = await meadow.StartDebuggingSession(debugPort, cancellationToken);
             }
