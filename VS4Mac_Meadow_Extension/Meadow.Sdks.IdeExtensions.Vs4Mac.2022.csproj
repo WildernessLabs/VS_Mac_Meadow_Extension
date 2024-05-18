@@ -25,5 +25,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Meadow.CLI\Source\v2\Meadow.Tooling.Core\Meadow.Tooling.Core.csproj" />
     <ProjectReference Include="..\..\Meadow.CLI\Source\v2\Meadow.SoftwareManager\Meadow.SoftwareManager.csproj" />
+    <ProjectReference Include="..\..\Meadow.CLI\Source\v2\Meadow.HCom\Meadow.HCom.csproj" />
   </ItemGroup>
 </Project>

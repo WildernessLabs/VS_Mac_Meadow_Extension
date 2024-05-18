@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Meadow.CLI;
@@ -95,7 +96,10 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             try
             {
                 var packageManager = new PackageManager(fileManager);
-                await AppManager.DeployApplication(packageManager, meadowConnection, OutputDirectory, includePdbs, false, logger, cancellationToken);
+
+                await packageManager.TrimApplication(new FileInfo(Path.Combine(OutputDirectory, "App.dll")), osVersion, includePdbs, cancellationToken: cancellationToken);
+
+                await AppManager.DeployApplication(packageManager, meadowConnection, osVersion, OutputDirectory, includePdbs, false, logger, cancellationToken);
 
                 await meadowConnection!.WaitForMeadowAttach();
             }
