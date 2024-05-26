@@ -72,6 +72,8 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 // TODO Maybe just set a new port, rather than create at totally new object?? meadowConnection.Name = target?.Port;
             }
 
+            await meadowConnection!.RuntimeDisable();
+
             var deviceInfo = await meadowConnection?.GetDeviceInfo(cancellationToken);
             string osVersion = deviceInfo?.OsVersion;
 
@@ -101,7 +103,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
                 await AppManager.DeployApplication(packageManager, meadowConnection, osVersion, OutputDirectory, includePdbs, false, logger, cancellationToken);
 
-                await meadowConnection!.WaitForMeadowAttach();
+                await meadowConnection!.RuntimeEnable();
             }
             finally
             {
