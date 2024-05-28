@@ -41,38 +41,24 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             cleanedup = false;
 
-            if (meadowConnection == null)
+            if (meadowConnection != null)
             {
-
-                var target = Target as MeadowDeviceExecutionTarget;
-
-                var retryCount = 0;
-
-                Debug.WriteLine($"get_serial_connection");
-            get_serial_connection:
-                try
-                {
-                    meadowConnection = new SerialConnection(target?.Port, logger);
-                }
-                catch
-                {
-                    retryCount++;
-                    if (retryCount > 10)
-                    {
-                        throw new Exception($"Cannot find port {target?.Port}");
-                    }
-                    Thread.Sleep(500);
-                    goto get_serial_connection;
-                }
-
-                await meadowConnection!.WaitForMeadowAttach();
-            }
-            else
-            {
-                // TODO Maybe just set a new port, rather than create at totally new object?? meadowConnection.Name = target?.Port;
+                meadowConnection.FileWriteProgress -= MeadowConnection_DeploymentProgress;
+                meadowConnection.DeviceMessageReceived -= MeadowConnection_DeviceMessageReceived;
             }
 
-            await meadowConnection!.RuntimeDisable();
+            var target = Target as MeadowDeviceExecutionTarget;
+            meadowConnection = MeadowConnection.GetCurrentConnection(target.Port, logger);
+
+            meadowConnection.FileWriteProgress += MeadowConnection_DeploymentProgress;
+            meadowConnection.DeviceMessageReceived += MeadowConnection_DeviceMessageReceived;
+
+            await meadowConnection.WaitForMeadowAttach();
+
+            if (await meadowConnection.IsRuntimeEnabled() == true)
+            {
+                await meadowConnection.RuntimeDisable();
+            }
 
             var deviceInfo = await meadowConnection?.GetDeviceInfo(cancellationToken);
             string osVersion = deviceInfo?.OsVersion;
@@ -92,16 +78,15 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 logger?.LogInformation($"OS download failed, make sure you have an active internet connection.{Environment.NewLine}{e.Message}");
             }
 
-            meadowConnection!.FileWriteProgress += MeadowConnection_DeploymentProgress;
-            meadowConnection!.DeviceMessageReceived += MeadowConnection_DeviceMessageReceived;
-
             try
             {
                 var packageManager = new PackageManager(fileManager);
 
+                logger.LogInformation("Trimming...");
                 await packageManager.TrimApplication(new FileInfo(Path.Combine(OutputDirectory, "App.dll")), osVersion, includePdbs, cancellationToken: cancellationToken);
 
-                await AppManager.DeployApplication(packageManager, meadowConnection, osVersion, OutputDirectory, includePdbs, false, logger, cancellationToken);
+                logger.LogInformation("Deploying...");
+                await Task.Run(async () => await AppManager.DeployApplication(packageManager, meadowConnection, osVersion, OutputDirectory, includePdbs, false, logger, cancellationToken));
 
                 await meadowConnection!.RuntimeEnable();
             }
@@ -112,6 +97,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             if (includePdbs)
             {
+                logger.LogInformation("Debugging...");
                 meadowDebugServer = await meadowConnection?.StartDebuggingSession(debugPort, logger, cancellationToken);
             }
             else
