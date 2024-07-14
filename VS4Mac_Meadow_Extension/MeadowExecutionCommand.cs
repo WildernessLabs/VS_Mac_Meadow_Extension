@@ -48,7 +48,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             }
 
             var target = Target as MeadowDeviceExecutionTarget;
-            meadowConnection = MeadowConnection.GetCurrentConnection(target.Port, logger);
+            meadowConnection = await MeadowConnection.GetSelectedConnection(target.Port, logger);
 
             meadowConnection.FileWriteProgress += MeadowConnection_DeploymentProgress;
             meadowConnection.DeviceMessageReceived += MeadowConnection_DeviceMessageReceived;
