@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Meadow.CLI;
+using Meadow.CLI.Commands.DeviceManagement;
 using Meadow.Hcom;
 using Meadow.Package;
 using Meadow.Software;
@@ -48,7 +49,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             }
 
             var target = Target as MeadowDeviceExecutionTarget;
-            meadowConnection = await MeadowConnection.GetSelectedConnection(target.Port, logger);
+            meadowConnection = await MeadowConnectionManager.GetConnectionForRoute(target.Port);
 
             meadowConnection.FileWriteProgress += MeadowConnection_DeploymentProgress;
             meadowConnection.DeviceMessageReceived += MeadowConnection_DeviceMessageReceived;
