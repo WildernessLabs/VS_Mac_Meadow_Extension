@@ -56,7 +56,10 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             await meadowConnection.WaitForMeadowAttach();
 
-            await meadowConnection.RuntimeDisable();
+            if (await meadowConnection.IsRuntimeEnabled() == true)
+            {
+                await meadowConnection.RuntimeDisable();
+            }
 
             var deviceInfo = await meadowConnection?.GetDeviceInfo(cancellationToken);
             string osVersion = deviceInfo?.OsVersion;
@@ -80,10 +83,10 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             {
                 var packageManager = new PackageManager(fileManager);
 
-                logger.LogInformation("Trimming...");
+                logger.LogInformation("Trimming application binaries...");
                 await packageManager.TrimApplication(new FileInfo(Path.Combine(OutputDirectory, "App.dll")), osVersion, includePdbs, cancellationToken: cancellationToken);
 
-                logger.LogInformation("Deploying...");
+                logger.LogInformation("Deploying application...");
                 await AppManager.DeployApplication(packageManager, meadowConnection, osVersion, OutputDirectory, includePdbs, false, logger, cancellationToken);
 
                 await meadowConnection.RuntimeEnable();
@@ -95,7 +98,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             if (includePdbs)
             {
-                logger.LogInformation("Debugging...");
+                logger.LogInformation("Debugging application...");
                 meadowDebugServer = await meadowConnection?.StartDebuggingSession(debugPort, logger, cancellationToken);
             }
             else
