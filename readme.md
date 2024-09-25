@@ -1,5 +1,14 @@
 <img src="Design/banner.jpg" style="margin-bottom:10px" />
 
+## Visual Studio for Mac support has reached end-of-life
+
+Visual Studio for Mac has been retired as of August 31, 2024. As a result, **Wilderness Labs is no longer supporting the Visual Studio for Mac Meadow extension**.
+
+However, this repo will remain open and pull requests from the community will be reviewed and merged. 
+
+For Meadow development on Mac OS, Wilderness Labs recommends [JetBrains Rider](https://www.jetbrains.com/rider/) or [Visual Studio Code](https://code.visualstudio.com/). 
+
+
 ## Build Status 
 
 [![Build](https://github.com/WildernessLabs/VS_Mac_Meadow_Extension/actions/workflows/dotnet.yml/badge.svg)](https://github.com/WildernessLabs/VS_Mac_Meadow_Extension/actions)
