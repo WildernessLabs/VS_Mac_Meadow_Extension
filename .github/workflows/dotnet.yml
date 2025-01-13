@@ -28,7 +28,7 @@ jobs:
       with:
         repository: WildernessLabs/Meadow.CLI
         path: Meadow.CLI
-        ref: dominique-TestDebugging
+        ref: develop
     
     - name: Checkout Meadow.Contracts side-by-side
       uses: actions/checkout@v4
@@ -44,6 +44,9 @@ jobs:
           6.0.x
           7.0.x
           8.0.x
+
+    - name: Install Visual Studio for Mac Dependencies
+      run: brew install --cask visual-studio
 
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v2
