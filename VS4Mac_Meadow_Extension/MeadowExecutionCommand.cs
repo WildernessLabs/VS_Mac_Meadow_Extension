@@ -49,76 +49,70 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             cleanedup = false;
 
-            if (meadowConnection != null)
+            await Task.Run(async () =>
             {
-                meadowConnection.FileWriteProgress -= MeadowConnection_DeploymentProgress;
-                meadowConnection.DeviceMessageReceived -= MeadowConnection_DeviceMessageReceived;
-                meadowConnection = null;
-            }
+                if (meadowConnection != null)
+                {
+                    meadowConnection.FileWriteProgress -= MeadowConnection_DeploymentProgress;
+                    meadowConnection.DeviceMessageReceived -= MeadowConnection_DeviceMessageReceived;
+                    meadowConnection = null;
+                }
 
-            var target = Target as MeadowDeviceExecutionTarget;
-            meadowConnection = connectionManager.GetConnectionForRoute(target.Port);
+                var target = Target as MeadowDeviceExecutionTarget;
+                meadowConnection = connectionManager.GetConnectionForRoute(target.Port);
 
-            meadowConnection.FileWriteProgress += MeadowConnection_DeploymentProgress;
-            meadowConnection.DeviceMessageReceived += MeadowConnection_DeviceMessageReceived;
+                meadowConnection.FileWriteProgress += MeadowConnection_DeploymentProgress;
+                meadowConnection.DeviceMessageReceived += MeadowConnection_DeviceMessageReceived;
 
-            await meadowConnection.WaitForMeadowAttach();
+                await meadowConnection.WaitForMeadowAttach();
 
-            if (await meadowConnection.IsRuntimeEnabled())
-            {
-                await meadowConnection.RuntimeDisable();
-            }
+                if (await meadowConnection.IsRuntimeEnabled())
+                {
+                    await meadowConnection.RuntimeDisable();
+                }
 
-            var deviceInfo = await meadowConnection?.GetDeviceInfo(cancellationToken);
-            string osVersion = deviceInfo?.OsVersion;
+                var deviceInfo = await meadowConnection?.GetDeviceInfo(cancellationToken);
+                string osVersion = deviceInfo?.OsVersion;
 
-            var fileManager = new FileManager(null);
-            await fileManager.Refresh();
+                var fileManager = new FileManager(null);
+                await fileManager.Refresh();
 
-            var collection = fileManager.Firmware["Meadow F7"];
+                try
+                {
+                    var packageManager = new PackageManager(fileManager);
 
-            //wrap this is a try/catch so it doesn't crash if the developer is offline
-            try
-            {
-                // TODO Download OS once we have a valid MeadowCloudClient
-            }
-            catch (Exception e)
-            {
-                logger?.LogInformation($"OS download failed, make sure you have an active internet connection.{Environment.NewLine}{e.Message}");
-            }
+                    logger.LogInformation("Trimming application binaries...");
+                    await packageManager.TrimApplication(new FileInfo(Path.Combine(OutputDirectory, "App.dll")), osVersion, includePdbs, cancellationToken: cancellationToken);
 
-            try
-            {
-                var packageManager = new PackageManager(fileManager);
+                    logger.LogInformation("Deploying application...");
+                    await AppManager.DeployApplication(packageManager, meadowConnection, osVersion, OutputDirectory, includePdbs, false, logger, cancellationToken);
 
-                logger.LogInformation("Trimming application binaries...");
-                await packageManager.TrimApplication(new FileInfo(Path.Combine(OutputDirectory, "App.dll")), osVersion, includePdbs, cancellationToken: cancellationToken);
+                    await Task.Delay(1500);
 
-                logger.LogInformation("Deploying application...");
-                await AppManager.DeployApplication(packageManager, meadowConnection, osVersion, OutputDirectory, includePdbs, false, logger, cancellationToken);
+                    await meadowConnection.RuntimeEnable();
+                }
+                finally
+                {
+                    meadowConnection.FileWriteProgress -= MeadowConnection_DeploymentProgress;
+                }
 
-                await Task.Delay(1500);
+                if (includePdbs)
+                {
+                    logger.LogInformation("Debugging application...");
+                    await Runtime.RunInMainThread(async () =>
+                    {
+                        meadowDebugServer = await meadowConnection?.StartDebuggingSession(debugPort, logger, cancellationToken);
+                    });
+                }
+                else
+                {
+                    // sleep until cancel since this is a normal deploy without debug
+                    while (!cancellationToken.IsCancellationRequested)
+                        await Task.Delay(1000, cancellationToken);
 
-                await meadowConnection.RuntimeEnable();
-            }
-            finally
-            {
-                meadowConnection.FileWriteProgress -= MeadowConnection_DeploymentProgress;
-            }
-
-            if (includePdbs)
-            {
-                logger.LogInformation("Debugging application...");
-                meadowDebugServer = await meadowConnection?.StartDebuggingSession(debugPort, logger, cancellationToken);
-            }
-            else
-            {
-                // sleep until cancel since this is a normal deploy without debug
-                while (!cancellationToken.IsCancellationRequested)
-                    await Task.Delay(1000, cancellationToken);
-
-                Cleanup();
-            }
+                    Cleanup();
+                }
+            });
         }
 
         private void MeadowConnection_DeviceMessageReceived(object sender, (string message, string source) e)
