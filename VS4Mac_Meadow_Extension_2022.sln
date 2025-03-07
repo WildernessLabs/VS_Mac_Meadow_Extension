@@ -7,15 +7,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.Sdks.IdeExtensions.Vs4Mac.2022", "VS4Mac_Meadow_Extension\Meadow.Sdks.IdeExtensions.Vs4Mac.2022.csproj", "{596A5F6C-A65D-4050-949A-AF032F2EDCC8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.HCom", "..\Meadow.CLI\Source\v2\Meadow.HCom\Meadow.HCom.csproj", "{D3C572A4-5A70-4832-B069-24247F617DB8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.HCom", "..\Meadow.CLI\Source\Meadow.HCom\Meadow.HCom.csproj", "{D3C572A4-5A70-4832-B069-24247F617DB8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.Tooling.Core", "..\Meadow.CLI\Source\v2\Meadow.Tooling.Core\Meadow.Tooling.Core.csproj", "{51B0655E-C2AE-439F-B27B-A9769334800E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.Tooling.Core", "..\Meadow.CLI\Source\Meadow.Tooling.Core\Meadow.Tooling.Core.csproj", "{51B0655E-C2AE-439F-B27B-A9769334800E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.Linker", "..\Meadow.CLI\Source\v2\Meadow.Linker\Meadow.Linker.csproj", "{1094CBE7-8E41-45EA-9145-204CE6EB3644}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.Linker", "..\Meadow.CLI\Source\Meadow.Linker\Meadow.Linker.csproj", "{1094CBE7-8E41-45EA-9145-204CE6EB3644}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.SoftwareManager", "..\Meadow.CLI\Source\v2\Meadow.SoftwareManager\Meadow.SoftwareManager.csproj", "{2355EF29-1A2D-4D6E-AA97-1309B2361F4E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.SoftwareManager", "..\Meadow.CLI\Source\Meadow.SoftwareManager\Meadow.SoftwareManager.csproj", "{2355EF29-1A2D-4D6E-AA97-1309B2361F4E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.Cloud.Client", "..\Meadow.CLI\Source\v2\Meadow.Cloud.Client\Meadow.Cloud.Client.csproj", "{219B8273-80CD-45E4-868C-AAB741FFD1F8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.Cloud.Client", "..\Meadow.CLI\Source\Meadow.Cloud.Client\Meadow.Cloud.Client.csproj", "{219B8273-80CD-45E4-868C-AAB741FFD1F8}"
 EndProject
 Project("{9344BDBB-3E7F-41FC-A0DD-8665D75EE146}") = "SimpleDeploy", "SimpleDeploy\SimpleDeploy.csproj", "{CD25239A-3B3E-49C2-94CD-D60D4EDF189A}"
 EndProject
