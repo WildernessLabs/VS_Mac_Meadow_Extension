@@ -1,7 +1,7 @@
 name: VS4Mac Extension
 env:
   IDE_TOOLS_RELEASE_VERSION: 2.0.0
-  MEADOW_OS_VERSION: 2.0.0.0
+  MEADOW_OS_VERSION: 2.0.0.3
   VS_MAC_2022_VERSION: 17.6
 
 on:
@@ -37,13 +37,12 @@ jobs:
         path: Meadow.Contracts
         ref: main
 
-    - name: Setup .NET Core 6.0.x, 7.0.x and 8.0.x
+    - name: Setup .NET Core 8.0.x and 9.0.x
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
-          6.0.x
-          7.0.x
           8.0.x
+          9.0.x
 
     - name: Install Visual Studio for Mac Dependencies
       run: brew install --cask visual-studio
