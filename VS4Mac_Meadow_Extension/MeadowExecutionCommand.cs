@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,8 +11,6 @@ using Meadow.Software;
 using Microsoft.Extensions.Logging;
 using MonoDevelop.Core;
 using MonoDevelop.Core.Execution;
-using MonoDevelop.Ide;
-using MonoDevelop.Projects;
 
 
 
@@ -27,9 +24,11 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
         public FilePath OutputDirectory { get; set; }
 
-        ILogger logger;
+        OutputLogger logger;
+        public OutputLogger Logger => logger;
+
         IMeadowConnection meadowConnection = null;
-        DebuggingServer meadowDebugServer = null;
+        public IMeadowConnection MeadowConnection => meadowConnection;
 
         private readonly SettingsManager settingsManager = new SettingsManager();
         private readonly MeadowConnectionManager connectionManager = null;
@@ -47,28 +46,25 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             DeploymentTargetsManager.StopPollingForDevices();
 
-            cleanedup = false;
-
-            await Task.Run(async () =>
+            if (meadowConnection != null)
             {
-                if (meadowConnection != null)
-                {
-                    meadowConnection.FileWriteProgress -= MeadowConnection_DeploymentProgress;
-                    meadowConnection.DeviceMessageReceived -= MeadowConnection_DeviceMessageReceived;
-                    meadowConnection = null;
-                }
+                meadowConnection.FileWriteProgress -= MeadowConnection_DeploymentProgress;
+                meadowConnection.DeviceMessageReceived -= MeadowConnection_DeviceMessageReceived;
+                meadowConnection = null;
+            }
 
-                var target = Target as MeadowDeviceExecutionTarget;
+            if (Target is MeadowDeviceExecutionTarget target)
+            {
                 meadowConnection = connectionManager.GetConnectionForRoute(target.Port);
 
                 meadowConnection.FileWriteProgress += MeadowConnection_DeploymentProgress;
                 meadowConnection.DeviceMessageReceived += MeadowConnection_DeviceMessageReceived;
 
-                await meadowConnection.WaitForMeadowAttach();
+                await meadowConnection.WaitForMeadowAttach(cancellationToken);
 
-                if (await meadowConnection.IsRuntimeEnabled())
+                if (await meadowConnection.IsRuntimeEnabled(cancellationToken))
                 {
-                    await meadowConnection.RuntimeDisable();
+                    await meadowConnection.RuntimeDisable(cancellationToken);
                 }
 
                 var deviceInfo = await meadowConnection?.GetDeviceInfo(cancellationToken);
@@ -81,38 +77,28 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
                 {
                     var packageManager = new PackageManager(fileManager);
 
-                    logger.LogInformation("Trimming application binaries...");
-                    await packageManager.TrimApplication(new FileInfo(Path.Combine(OutputDirectory, "App.dll")), osVersion, includePdbs, cancellationToken: cancellationToken);
+                    await packageManager.TrimApplication(new FileInfo(Path.Combine(OutputDirectory, "App.dll")), osVersion, includePdbs, null, logger, cancellationToken);
 
-                    logger.LogInformation("Deploying application...");
                     await AppManager.DeployApplication(packageManager, meadowConnection, osVersion, OutputDirectory, includePdbs, false, logger, cancellationToken);
 
-                    await Task.Delay(1500);
+                    await Task.Delay(1500, cancellationToken);
 
-                    await meadowConnection.RuntimeEnable();
+                    await meadowConnection.RuntimeEnable(cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError($"Deployment failed: {ex.Message}");
+                    throw;
                 }
                 finally
                 {
                     meadowConnection.FileWriteProgress -= MeadowConnection_DeploymentProgress;
                 }
-
-                if (includePdbs)
-                {
-                    logger.LogInformation("Debugging application...");
-                    await Runtime.RunInMainThread(async () =>
-                    {
-                        meadowDebugServer = await meadowConnection?.StartDebuggingSession(debugPort, logger, cancellationToken);
-                    });
-                }
-                else
-                {
-                    // sleep until cancel since this is a normal deploy without debug
-                    while (!cancellationToken.IsCancellationRequested)
-                        await Task.Delay(1000, cancellationToken);
-
-                    Cleanup();
-                }
-            });
+            }
+            else
+            {
+                logger.LogError($"Property {nameof(Target)} is not a valid type of MeadowDeviceExecutionTarget");
+            }
         }
 
         private void MeadowConnection_DeviceMessageReceived(object sender, (string message, string source) e)
@@ -130,32 +116,6 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
             {
                 outputLogger.ReportFileProgress(e.fileName, p);
             }
-        }
-
-        bool cleanedup = true;
-        public void Cleanup()
-        {
-            if (cleanedup)
-                return;
-
-            if (meadowDebugServer != null)
-            {
-                meadowDebugServer?.StopListening();
-                meadowDebugServer?.Dispose();
-                meadowDebugServer = null;
-            }
-
-            if (meadowConnection != null)
-            {
-                meadowConnection.DeviceMessageReceived -= MeadowConnection_DeviceMessageReceived;
-                meadowConnection.Dispose();
-                meadowConnection = null;
-            }
-
-            if (!cleanedup)
-                _ = DeploymentTargetsManager.StartPollingForDevices();
-
-            cleanedup = true;
         }
     }
 }
