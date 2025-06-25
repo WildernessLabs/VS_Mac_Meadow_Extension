@@ -55,7 +55,7 @@ namespace Meadow.Sdks.IdeExtensions.Vs4Mac
 
             if (Target is MeadowDeviceExecutionTarget target)
             {
-                meadowConnection = connectionManager.GetConnectionForRoute(target.Port);
+                meadowConnection = connectionManager.GetConnection(target.Port);
 
                 meadowConnection.FileWriteProgress += MeadowConnection_DeploymentProgress;
                 meadowConnection.DeviceMessageReceived += MeadowConnection_DeviceMessageReceived;
